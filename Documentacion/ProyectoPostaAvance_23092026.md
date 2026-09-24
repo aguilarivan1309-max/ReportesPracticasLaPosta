@@ -1,7 +1,8 @@
+
 # 1. Levantamiento y comprensión del proyecto
 
 ## 1.1 Descripción del problema
-
+### 14/09/2026 12:00 - 14:00
 El área de tecnología de TI necesita contar con un sistema que permita administrar de manera organizada los bienes relacionados con TI. Actualmente se requiere conocer qué bienes existen, dónde se encuentran, quién los tiene bajo responsabilidad, cuál es el estado y cuál ha sido su recorrido dentro de la organización.
 
 El sistema deberá permitir registrar y consultar los bienes, relacionados con la información de su adquisición, conservar documentos y fotografías, y facilitar su identificación mediante códigos QR.
@@ -15,172 +16,6 @@ En esta primera etapa se desarrollará únicamente el backend del sistema. El ba
 El sistema contemplará la administración del inventario, ubicaciones, responsables, estados, adquisiciones, archivos, códigos QR e historial de cambios, además de mecanismos de autenticación, autorización, pruebas y documentación.
 
 La interfaz final en React y otros módulos como tickets, incidencias, reparaciones y mantenimientos no forman parte de esta primera etapa.
-
-## 1.3 Actores del sistema
-
-Para el funcionamiento del sistema del inventario se consideran tres tipos de usuarios:
-
-**Administrador**
-
-Es el usuario encargado de administrar el sistema y sus configuraciones principales. Tendrá permisos para registrar, modificar y consultar la información del inventario, así como administrar usuarios y permisos cuando corresponda.
-
-**Operador**
-
-Es el usuario encargado de realizar las operaciones cotidianas del inventario. Podrá registrar y actualizar bienes, ubicaciones, responsables y estados, además de consultar la información necesaria para realizar sus actividades.
-
-**Usuario de consulta**
-
-Es el usuario que únicamente necesita consultar información del inventario. Tendrá permisos limitados y no podrá modificar los registros.
-
-## 1.4 Permisos y acciones de usuarios
-
-| Acción | Administrador | Operador | Usuario de consulta |
-|---|:---:|:---:|:---:|
-| Iniciar sesión | ✓ | ✓ | ✓ |
-| Consultar bienes | ✓ | ✓ | ✓ |
-| Buscar y filtrar bienes | ✓ | ✓ | ✓ |
-| Registrar bienes | ✓ | ✓ | ✕ |
-| Modificar bienes | ✓ | ✓ | ✕ |
-| Registrar ubicaciones | ✓ | ✓ | ✕ |
-| Modificar ubicaciones | ✓ | ✓ | ✕ |
-| Registrar responsables | ✓ | ✓ | ✕ |
-| Modificar responsables | ✓ | ✓ | ✕ |
-| Cambiar estado de un bien | ✓ | ✓ | ✕ |
-| Registrar adquisiciones | ✓ | ✓ | ✕ |
-| Cargar documentos y fotografías | ✓ | ✓ | ✕ |
-| Asociar código QR | ✓ | ✓ | ✕ |
-| Consultar historial | ✓ | ✓ | ✓ |
-| Consultar información mediante QR | ✓ | ✓ | ✓ |
-| Administrar usuarios y permisos | ✓ | ✕ | ✕ |
-
-## 1.5 Información de los bienes
-
-Para que el sistema pueda identificar y administrar correctamente los bienes de TI, cada registro deberá contener información suficiente para distinguirlo de otros bienes.
-
-| Dato | Descripción |
-|---|---|
-| Identificador | Referencia única del bien cuando requiera seguimiento individual |
-| Nombre | Nombre del bien |
-| Descripción | Información adicional para describir el artículo |
-| Categoría | Tipo de bien al que pertenece |
-| Marca | Fabricante del bien |
-| Modelo | Modelo correspondiente |
-| Número de serie | Identificador proporcionado por el fabricante, cuando exista |
-| Estado | Situación actual del bien |
-| Ubicación | Lugar donde se encuentra actualmente |
-| Responsable | Persona que tiene el bien asignado o bajo resguardo |
-| Código QR | Identificador utilizado para localizar la ficha del bien |
-| Fecha de registro | Fecha en que el bien fue incorporado al sistema |
-
-## 1.6 Clasificación de bienes
-
-El sistema deberá permitir registrar diferentes tipos de bienes relacionados con el área de Tecnologías de la Información. Debido a que no todos los artículos se administran de la misma manera, se propone clasificarlos en las siguientes categorías:
-
-| Tipo de bien | Descripción | ¿Requiere identificación individual? | Ejemplos |
-|---|---|:---:|---|
-| Activo Individual | Bien que debe ser identificado y seguido de manera individual durante su permanencia en la organización | Sí | Laptop, servidor, monitor, impresora, teléfono |
-| Componente | Elemento que puede formar parte de un equipo o estar instalado dentro de otro bien | Puede requerirla | Memoria RAM, disco duro, tarjeta de red |
-| Accesorio | Artículo complementario utilizado junto con un equipo, pero que no necesariamente forma parte de él | Generalmente no | Teclado, mouse, adaptador |
-| Refacción | Pieza destinada a sustituir un componente o pieza de un equipo | Generalmente no | Fuente de poder, ventilador, batería |
-| Consumible | Artículo que se utiliza y se reemplaza periódicamente como parte de la operación | No | Tóner, papel, consumibles de impresión |
-
-## 1.7 Ubicación, responsable y estado
-
-Para mantener un control adecuado de los bienes, el sistema deberá registrar su ubicación actual, la persona responsable y el estado en el que se encuentra cada bien.
-
-**Ubicación**
-
-La ubicación representa el lugar donde se encuentra actualmente un bien.
-Por ejemplo:
-
-| Ubicación | Ejemplo |
-|---|---|
-| Edificio | Edificio A |
-| Área | Área de tecnologías de la información |
-| Oficina | Oficina 3 |
-| Almacén | Almacén de TI |
-
-Una ubicación deberá poder asociarse con varios bienes y permitirá consultar qué bienes se encuentran actualmente en ella.
-
-**Responsable**
-
-El responsable representa a la persona que tiene un bien asignado o bajo su resguardo.
-El sistema deberá permitir identificar al responsable de un bien y consultar los bienes relacionados con cada responsable.
-
-**Estado**
-
-El estado representa la condición administrativa u operativa actual de un bien.
-
-Como parte del análisis inicial se consideran estados que permitirán distinguir la situación del bien, por ejemplo:
-
-| Estado | Descripción |
-|---|---|
-| En uso | El bien se encuentra actualmente en funcionamiento o asignado |
-| Almacenamiento | El bien se encuentra resguardado y no está asignado |
-| En revisión | El bien se encuentra pendiente de revisión o verificación |
-| Baja | El bien ha dejado de formar parte de los bienes disponibles para su uso |
-
-Los estados deberán permitir representar de forma clara la condición actual del bien y posteriormente controlar las transiciones que sean válidas dentro del proceso.
-
-## 1.8 Adquisiciones y documentos
-
-Los bienes registrados en el inventario deberán poder relacionarse con la adquisición que les dio origen. De esta manera, el sistema podrá conservar información relacionada con la compra y mantener evidencia documental asociada a los bienes.
-
-La información de una adquisición podrá incluir los datos necesarios para identificar la compra y relacionarla con uno o varios bienes registrados en el inventario.
-
-Además, el sistema deberá permitir conservar diferentes tipos de archivos de respaldo, de acuerdo con la información disponible para cada adquisición o bien.
-
-Entre los archivos que se contemplan se encuentran:
-
-| Tipo de archivo | Uso dentro del sistema |
-|---|---|
-| Factura | Evidencia de la adquisición del bien |
-| PDF | Documento de respaldo relacionado con la compra |
-| XML | Archivo electrónico asociado a la factura |
-| Fotografía | Evidencia visual para apoyar la identificación del bien |
-
-Los archivos deberán almacenarse de manera organizada y deberán considerarse mecanismos para validar los tipos y tamaños permitidos. También deberán contemplarse aspectos de seguridad, recuperación y crecimiento del almacenamiento.
-
-La relación entre adquisiciones y bienes deberá permitir que una misma compra pueda estar asociada con varios bienes cuando corresponda.
-
-## 1.9 Código QR
-
-Los bienes que requieran identificación individual podrán contar con un código QR asociado a su registro dentro del sistema. El objetivo del código será facilitar la identificación física del bien y permitir localizar rápidamente su ficha correspondiente.
-
-El código QR no deberá contener directamente información sensible del activo. En su lugar, deberá utilizar un identificador que permita al sistema localizar el registro correspondiente y aplicar las reglas de acceso establecidas.
-
-La información almacenada en el QR deberá mantenerse independiente de los datos que se muestran en la ficha del bien. De esta manera, si la información del activo cambia, por ejemplo su ubicación, responsable o estado, no será necesario modificar el código QR.
-
-El sistema deberá contemplar también la posibilidad de asociar o generar nuevamente un código cuando un bien lo requiera, así como considerar qué procedimiento seguir cuando una etiqueta QR se dañe o deje de ser legible.
-
-Como parte de una investigación posterior se compararán diferentes alternativas para la lectura e impresión de los códigos QR, considerando dispositivos, compatibilidad, costos aproximados, ventajas, limitaciones y materiales para las etiquetas.
-
-## 1.10 Historial y trazabilidad
-
-El sistema deberá conservar un historial de los cambios relevantes realizados sobre los bienes del inventario, con el propósito de mantener la trazabilidad de cada activo durante su permanencia dentro de la organización.
-
-El historial deberá permitir conocer, como mínimo, los cambios relacionados con:
-- Ubicación.
-- Responsable.
-- Estado.
-
-Cada registro del historial deberá conservar información que permita identificar cuándo ocurrió el cambio, qué modificación se realizó y qué usuario registró la operación.
-
-El historial deberá mantenerse aunque la información actual del bien sea modificada. Por lo tanto, actualizar la ubicación, el responsable o el estado de un bien no deberá eliminar los datos correspondientes a sus situaciones anteriores.
-
-Por ejemplo, si un equipo cambia de ubicación, el sistema deberá conservar tanto la ubicación anterior como la nueva:
-
-| Fecha | Ubicación anterior | Ubicación nueva | Usuario |
-|---|:---:|:---:|:---:|
-| 10/09/2026 | Laboratorio 1 | Laboratorio 2 | Operador1 |
-
-De esta manera, será posible consultar tanto la situación actual del bien como los movimientos que ha tenido anteriormente.
-
-La trazabilidad permitirá reconstruir el recorrido de los bienes y proporcionará evidencia de las operaciones realizadas sobre ellos.
-
-
-
-
 
 
 # 13. Preguntas orientadoras para la investigacón 
@@ -207,6 +42,10 @@ Dentro de los consumibles conviene distinguir dos casos:
 
 Esta distinción se retoma más adelante, en la Regla 4, al definir los estados aplicables a cada caso.
 
+# -------
+### 16/09/2026 9:00 - 16:00 
+
+# Continuacion de Preguntas
 ## 2. ¿Qué información es indispensable para identificar un equipo sin crear formularios innecesariamente extensos?
 
 Se debe capturar solo la información indispensable que permita identificar, localizar y controlar el equipo.
@@ -481,3 +320,393 @@ Representa un costo adicional de adquisición y mantenimiento.
 Etiquetas QR más teléfonos inteligentes para la lectura, debido a su practicidad: evita la compra de lectores especializados y permite que el personal consulte la información del activo desde el lugar donde se encuentra.
 
 El QR contendrá un identificador único del activo o una referencia que permita al sistema localizar su registro. De esta manera el código no almacena toda la información del equipo: la información permanece en la base de datos y el QR funciona principalmente como mecanismo de identificación.
+
+## 1.3 Actores del sistema
+
+Para el funcionamiento del sistema del inventario se consideran tres tipos de usuarios:
+
+**Administrador**
+
+Es el usuario encargado de administrar el sistema y sus configuraciones principales. Tendrá permisos para registrar, modificar y consultar la información del inventario, así como administrar usuarios y permisos cuando corresponda.
+
+**Operador**
+
+Es el usuario encargado de realizar las operaciones cotidianas del inventario. Podrá registrar y actualizar bienes, ubicaciones, responsables y estados, además de consultar la información necesaria para realizar sus actividades.
+
+**Usuario de consulta**
+
+Es el usuario que únicamente necesita consultar información del inventario. Tendrá permisos limitados y no podrá modificar los registros.
+
+## 1.4 Permisos y acciones de usuarios
+
+| Acción | Administrador | Operador | Usuario de consulta |
+|---|:---:|:---:|:---:|
+| Iniciar sesión | ✓ | ✓ | ✓ |
+| Consultar bienes | ✓ | ✓ | ✓ |
+| Buscar y filtrar bienes | ✓ | ✓ | ✓ |
+| Registrar bienes | ✓ | ✓ | ✕ |
+| Modificar bienes | ✓ | ✓ | ✕ |
+| Registrar ubicaciones | ✓ | ✓ | ✕ |
+| Modificar ubicaciones | ✓ | ✓ | ✕ |
+| Registrar responsables | ✓ | ✓ | ✕ |
+| Modificar responsables | ✓ | ✓ | ✕ |
+| Cambiar estado de un bien | ✓ | ✓ | ✕ |
+| Registrar adquisiciones | ✓ | ✓ | ✕ |
+| Cargar documentos y fotografías | ✓ | ✓ | ✕ |
+| Asociar código QR | ✓ | ✓ | ✕ |
+| Consultar historial | ✓ | ✓ | ✓ |
+| Consultar información mediante QR | ✓ | ✓ | ✓ |
+| Administrar usuarios y permisos | ✓ | ✕ | ✕ |
+
+## Entidades propuestas para la base de datos 
+A partir de las necesidades identificadas se propone considerar inicialmente las siguientes entidades:
+
+- Factura (o documento de origen)
+- Activo
+- TipoActivo
+- Usuario
+- Ubicación
+- Asignación
+- Movimiento
+- Componente
+- ComponenteInstalado
+- Mantenimiento
+- Incidencia
+- EtiquetaQR
+Respecto a las entidades **Asignación** y **Movimiento**: ambas registran eventos sobre el activo y podrían solaparse. Se propone tratar la asignación como un tipo de movimiento dentro de una misma bitácora, diferenciándolo mediante un campo de tipo de evento (alta, asignación, traslado, devolución, mantenimiento, baja). De esta forma se evita registrar el mismo hecho en dos lugares distintos. Esta decisión también queda pendiente de confirmación durante el diseño de la base de datos.
+
+
+# ----
+# 21/01/2026 12:00 - 14:00 
+## 1.5 Información de los bienes
+
+Para que el sistema pueda identificar y administrar correctamente los bienes de TI, cada registro deberá contener información suficiente para distinguirlo de otros bienes.
+
+| Dato | Descripción |
+|---|---|
+| Identificador | Referencia única del bien cuando requiera seguimiento individual |
+| Nombre | Nombre del bien |
+| Descripción | Información adicional para describir el artículo |
+| Categoría | Tipo de bien al que pertenece |
+| Marca | Fabricante del bien |
+| Modelo | Modelo correspondiente |
+| Número de serie | Identificador proporcionado por el fabricante, cuando exista |
+| Estado | Situación actual del bien |
+| Ubicación | Lugar donde se encuentra actualmente |
+| Responsable | Persona que tiene el bien asignado o bajo resguardo |
+| Código QR | Identificador utilizado para localizar la ficha del bien |
+| Fecha de registro | Fecha en que el bien fue incorporado al sistema |
+
+## 1.6 Clasificación de bienes
+
+El sistema deberá permitir registrar diferentes tipos de bienes relacionados con el área de Tecnologías de la Información. Debido a que no todos los artículos se administran de la misma manera, se propone clasificarlos en las siguientes categorías:
+
+| Tipo de bien | Descripción | ¿Requiere identificación individual? | Ejemplos |
+|---|---|:---:|---|
+| Activo Individual | Bien que debe ser identificado y seguido de manera individual durante su permanencia en la organización | Sí | Laptop, servidor, monitor, impresora, teléfono |
+| Componente | Elemento que puede formar parte de un equipo o estar instalado dentro de otro bien | Puede requerirla | Memoria RAM, disco duro, tarjeta de red |
+| Accesorio | Artículo complementario utilizado junto con un equipo, pero que no necesariamente forma parte de él | Generalmente no | Teclado, mouse, adaptador |
+| Refacción | Pieza destinada a sustituir un componente o pieza de un equipo | Generalmente no | Fuente de poder, ventilador, batería |
+| Consumible | Artículo que se utiliza y se reemplaza periódicamente como parte de la operación | No | Tóner, papel, consumibles de impresión |
+
+## Información preliminar del activo
+
+A partir del análisis anterior se identifica que el registro de un activo podría requerir inicialmente la siguiente información:
+
+| Campo | Propósito |
+|---|---|
+| Identificador | Identificar de manera única el activo |
+| Tipo | Clasificar el activo |
+| Marca | Identificar el fabricante |
+| Modelo | Identificar el modelo |
+| Número de serie | Identificación proporcionada por el fabricante |
+| Estado | Conocer la situación actual |
+| Ubicación | Conocer dónde se encuentra |
+| Responsable | Conocer quién tiene asignado el activo |
+| Fecha de registro | Identificar cuándo fue registrado |
+| Observaciones | Registrar información adicional |
+
+
+
+# --- 
+# 23/09/2026 9:00 - 14:00 
+## 1.7 Ubicación, responsable y estado
+
+Para mantener un control adecuado de los bienes, el sistema deberá registrar su ubicación actual, la persona responsable y el estado en el que se encuentra cada bien.
+
+**Ubicación**
+
+La ubicación representa el lugar donde se encuentra actualmente un bien.
+Por ejemplo:
+
+| Ubicación | Ejemplo |
+|---|---|
+| Edificio | Edificio A |
+| Área | Área de tecnologías de la información |
+| Oficina | Oficina 3 |
+| Almacén | Almacén de TI |
+
+Una ubicación deberá poder asociarse con varios bienes y permitirá consultar qué bienes se encuentran actualmente en ella.
+
+**Responsable**
+
+El responsable representa a la persona que tiene un bien asignado o bajo su resguardo.
+El sistema deberá permitir identificar al responsable de un bien y consultar los bienes relacionados con cada responsable.
+
+**Estado**
+
+El estado representa la condición administrativa u operativa actual de un bien.
+
+Como parte del análisis inicial se consideran estados que permitirán distinguir la situación del bien, por ejemplo:
+
+| Estado | Descripción |
+|---|---|
+| En uso | El bien se encuentra actualmente en funcionamiento o asignado |
+| Almacenamiento | El bien se encuentra resguardado y no está asignado |
+| En revisión | El bien se encuentra pendiente de revisión o verificación |
+| Baja | El bien ha dejado de formar parte de los bienes disponibles para su uso |
+
+Los estados deberán permitir representar de forma clara la condición actual del bien y posteriormente controlar las transiciones que sean válidas dentro del proceso.
+
+## 1.8 Adquisiciones y documentos
+
+Los bienes registrados en el inventario deberán poder relacionarse con la adquisición que les dio origen. De esta manera, el sistema podrá conservar información relacionada con la compra y mantener evidencia documental asociada a los bienes.
+
+La información de una adquisición podrá incluir los datos necesarios para identificar la compra y relacionarla con uno o varios bienes registrados en el inventario.
+
+Además, el sistema deberá permitir conservar diferentes tipos de archivos de respaldo, de acuerdo con la información disponible para cada adquisición o bien.
+
+Entre los archivos que se contemplan se encuentran:
+
+| Tipo de archivo | Uso dentro del sistema |
+|---|---|
+| Factura | Evidencia de la adquisición del bien |
+| PDF | Documento de respaldo relacionado con la compra |
+| XML | Archivo electrónico asociado a la factura |
+| Fotografía | Evidencia visual para apoyar la identificación del bien |
+
+Los archivos deberán almacenarse de manera organizada y deberán considerarse mecanismos para validar los tipos y tamaños permitidos. También deberán contemplarse aspectos de seguridad, recuperación y crecimiento del almacenamiento.
+
+La relación entre adquisiciones y bienes deberá permitir que una misma compra pueda estar asociada con varios bienes cuando corresponda.
+
+## 1.9 Código QR
+
+Los bienes que requieran identificación individual podrán contar con un código QR asociado a su registro dentro del sistema. El objetivo del código será facilitar la identificación física del bien y permitir localizar rápidamente su ficha correspondiente.
+
+El código QR no deberá contener directamente información sensible del activo. En su lugar, deberá utilizar un identificador que permita al sistema localizar el registro correspondiente y aplicar las reglas de acceso establecidas.
+
+La información almacenada en el QR deberá mantenerse independiente de los datos que se muestran en la ficha del bien. De esta manera, si la información del activo cambia, por ejemplo su ubicación, responsable o estado, no será necesario modificar el código QR.
+
+El sistema deberá contemplar también la posibilidad de asociar o generar nuevamente un código cuando un bien lo requiera, así como considerar qué procedimiento seguir cuando una etiqueta QR se dañe o deje de ser legible.
+
+Como parte de una investigación posterior se compararán diferentes alternativas para la lectura e impresión de los códigos QR, considerando dispositivos, compatibilidad, costos aproximados, ventajas, limitaciones y materiales para las etiquetas.
+
+## 1.10 Historial y trazabilidad
+### Analisis de Trazabilidad
+Los activos tecnológicos pueden experimentar diferentes cambios durante su vida útil.
+
+Un equipo puede cambiar de:
+
+- Usuario
+- Responsable
+- Ubicación
+- Estado
+- Componentes
+- Condición de mantenimiento
+
+Por lo anterior se propone el manejo de dos tipos de información.
+
+**Información actual.** Permite conocer la condición y situación actual del activo:
+
+```
+Equipo:      PC-001
+Ubicación:   Oficina de TI
+Responsable: Usuario A
+Estado:      En operación
+```
+
+**Información histórica.** Permite conocer los cambios anteriores:
+
+```
+PC-001      -> Oficina A -> Oficina B
+PC-001      -> Usuario A -> Usuario B
+SSD 256 GB  -> Retirado
+SSD 1 TB    -> Instalado
+```
+
+De esta manera la base de datos no solo permite conocer el estado actual, sino también reconstruir los cambios importantes que haya experimentado el activo.
+
+## Trazabilidad 
+El sistema deberá conservar un historial de los cambios relevantes realizados sobre los bienes del inventario, con el propósito de mantener la trazabilidad de cada activo durante su permanencia dentro de la organización.
+
+El historial deberá permitir conocer, como mínimo, los cambios relacionados con:
+- Ubicación.
+- Responsable.
+- Estado.
+
+Cada registro del historial deberá conservar información que permita identificar cuándo ocurrió el cambio, qué modificación se realizó y qué usuario registró la operación.
+
+El historial deberá mantenerse aunque la información actual del bien sea modificada. Por lo tanto, actualizar la ubicación, el responsable o el estado de un bien no deberá eliminar los datos correspondientes a sus situaciones anteriores.
+
+Por ejemplo, si un equipo cambia de ubicación, el sistema deberá conservar tanto la ubicación anterior como la nueva:
+
+| Fecha | Ubicación anterior | Ubicación nueva | Usuario |
+|---|:---:|:---:|:---:|
+| 10/09/2026 | Laboratorio 1 | Laboratorio 2 | Operador1 |
+
+De esta manera, será posible consultar tanto la situación actual del bien como los movimientos que ha tenido anteriormente.
+
+La trazabilidad permitirá reconstruir el recorrido de los bienes y proporcionará evidencia de las operaciones realizadas sobre ellos.
+
+## Análisis de las reglas de inventario
+
+Uno de los aspectos principales a considerar es la necesidad de establecer reglas que permitan mantener información consistente en el inventario.
+
+**Regla 1. Identificación única**
+
+Cada activo debe contar con un identificador único que permita distinguirlo de los demás activos registrados. El sistema debe evitar que dos o más activos tengan el mismo identificador.
+
+**Regla 2. Información mínima obligatoria**
+
+Para el registro de activos deben establecerse determinados datos indispensables, evitando la solicitud de información innecesaria. Entre los datos considerados de manera inicial están:
+
+1. Identificador
+2. Tipo de activo
+3. Marca
+4. Modelo
+5. Número de serie (cuando exista)
+6. Estado
+7. Ubicación
+8. Responsable o usuario asignado
+
+**Regla 3. Estado del activo**
+
+Todo activo debe mantener un estado actual que permita conocer su condición o situación dentro del inventario.
+
+Para computadoras, impresoras y equipos de almacenamiento:
+
+- **Activo / en uso:** el equipo está asignado a un usuario o departamento, o conectado a la red, cumpliendo funciones operativas.
+- **Disponible / en stock:** el equipo está en almacén o inventario central, en buen estado y listo para ser asignado o instalado.
+- **En mantenimiento / reparación:** el activo presenta una falla temporal y se encuentra en revisión técnica, interna o del proveedor.
+- **En tránsito / préstamo:** el equipo fue trasladado temporalmente a otra sucursal o se entregó como préstamo temporal a un usuario.
+- **Baja temporal:** el equipo está retenido por auditoría o por respaldo de información pendiente.
+- **Dado de baja:** el activo cumplió su vida útil o está dañado y ha sido retirado del inventario.
+
+**Regla 4. Control de consumibles**
+
+Los consumibles no se controlan de la misma forma que los activos individuales. Se distinguen dos casos:
+
+*Consumibles serializados* (tóneres y cartuchos). Se registran individualmente y mantienen un estado propio:
+
+- **Nuevo / en stock:** el consumible está sellado en su empaque original, almacenado y listo para su uso.
+- **En uso / instalado:** el tóner o cartucho fue colocado en una impresora y se encuentra operando.
+- **Agotado / vacío:** el consumible llegó al fin de su vida útil y está pendiente de reemplazo o de recolección para reciclaje.
+- **Dañado / defectuoso:** el consumible llegó con fallas de fábrica, se derramó o se rompió el sello antes de instalarse.
+- **Caducado:** el consumible superó la fecha recomendada por el fabricante, lo que podría afectar la calidad de impresión o dañar el equipo.
+
+*Consumibles no serializados* (cables, etiquetas, material de limpieza). Se controlan únicamente mediante entradas, salidas y existencias, sin identificador individual ni historial por unidad.
+
+**Regla 5. Relación entre activos y componentes**
+
+Los componentes instalados deben poder relacionarse con el equipo al que pertenecen. La estructura debe considerar que un componente puede ser retirado de un equipo y posteriormente instalarse en otro. Un mismo componente no puede figurar como instalado en dos equipos al mismo tiempo.
+
+**Regla 6. Conservación de la información**
+
+Los cambios realizados sobre un activo no deben provocar la pérdida de la información anterior cuando esta sea necesaria para fines de trazabilidad.
+
+**Regla 7. Inventario relacionado con el documento de origen**
+
+Todo activo registrado debe contar con una referencia al documento mediante el cual ingresó al inventario. En la mayoría de los casos este documento será la factura de adquisición, pero también deben contemplarse otros orígenes:
+
+- Factura de compra
+- Contrato de arrendamiento o comodato
+- Acta de donación
+- Acta de transferencia desde otra área o dependencia
+
+Cuando un activo se incorpore al inventario sin que su documento de origen esté disponible, el registro se marca como **pendiente de documentación**, en lugar de rechazarse. Esto evita que equipos heredados o sin factura localizable queden fuera del inventario.
+
+Mostrando las reglas de forma resumida:
+
+| Situación | Resultado esperado |
+|---|---|
+| Registrar activo con documento de origen | Registro permitido |
+| Registrar activo sin documento de origen | Registro permitido, marcado como pendiente de documentación |
+| Registrar varios activos con un mismo documento | Permitido |
+| Registrar varios componentes con un mismo documento | Permitido |
+| Consultar el documento desde un activo | Debe mostrar el documento relacionado |
+| Consultar los activos desde un documento | Debe mostrar los activos relacionados |
+
+# Relaciones propuestas por activos 
+Se identifican las siguientes relaciones:
+
+- Un TipoActivo puede estar relacionado con varios Activos.
+- Un Activo puede tener diferentes asignaciones a lo largo del tiempo.
+- Un Activo puede registrar diferentes movimientos.
+- Un Activo puede tener diferentes registros de mantenimiento.
+- Un Activo puede presentar diferentes incidencias.
+- Un Componente puede ser retirado de un activo y posteriormente relacionarse con otro.
+- Una Ubicación puede contener múltiples activos.
+- Un Activo puede tener asociado un código QR para facilitar su identificación.
+
+## Relacion entre facturas y activos 
+Se establece una relación de uno a muchos entre las entidades Factura y Activo:
+
+- Una factura puede contener uno o varios activos.
+- Cada activo debe estar asociado a un documento de origen, o bien quedar marcado como pendiente de documentación.
+- Una misma factura puede estar relacionada con diferentes tipos de activos.
+
+La relación se representa como:
+
+```
+Factura (1) ---------------------- (N) Activo
+```
+
+Ejemplo de una factura:
+
+```
+Factura F-00125
+    Laptop Dell Latitude 5420
+    Monitor Dell P2422H
+    Impresora HP LaserJet
+```
+
+Los tres elementos pertenecen a la misma factura, pero cada uno mantiene su propio registro dentro del inventario.
+
+# Relacion entre Facturas y componentes
+Se identifica también el caso de que una factura puede incluir componentes tecnológicos que no necesariamente representan un equipo completo. Por ejemplo:
+
+- 5 memorias RAM
+- 3 unidades SSD
+- 2 fuentes de alimentación
+- 1 computadora portátil
+
+De la misma manera, cada uno de los componentes debe poder relacionarse con la factura correspondiente:
+
+```
+Factura (1) ---------------------- (N) Componente
+```
+### Informacion necesaria de la factura (Propuesta)
+Se consideran los siguientes elementos:
+
+- Identificador de la factura
+- Folio o número de factura
+- Fecha de emisión
+- Proveedor
+- RFC del proveedor
+- Importe total
+- Moneda
+- Archivo o documento digital de la factura (si se requiere almacenar)
+- Observaciones
+
+
+
+
+
+
+
+
+
+
+
+
+
