@@ -18,7 +18,7 @@ El sistema contemplará la administración del inventario, ubicaciones, responsa
 La interfaz final en React y otros módulos como tickets, incidencias, reparaciones y mantenimientos no forman parte de esta primera etapa.
 
 
-# 13. Preguntas orientadoras para la investigacón 
+# 1.3. Preguntas orientadoras para la investigacón 
 ## 1. ¿Qué diferencias existen entre un activo individual, una componente instalada, un accesorio, una refacción y un consumible?
 
 La diferencia principal está en la manera en la que se controla cada uno de los elementos dentro del inventario.
@@ -697,6 +697,103 @@ Se consideran los siguientes elementos:
 - Moneda
 - Archivo o documento digital de la factura (si se requiere almacenar)
 - Observaciones
+
+
+# -------
+### 25/09/2026 9:00 - 11:00
+
+## 1.11 Consultas y búsquedas
+El sistema deberá proporcinar mecanismos de consultas que permitan localizart de manera eficiente los bienes registrados en el inventario. 
+
+Las consultas deberán permitir buscar y filtrar información relevante de los bienes, por ejemplo: 
+- Identificador del bien. 
+- Nombre. 
+- Categoría. 
+- Marca o modelo 
+- Número de serie 
+- Ubicación 
+- Responsable 
+- Estado 
+
+Tambien deberá ser posible ordenas los resultados de acuerdo con los datos disponibles, con el objetivo de facilitar la consulta del inventario. 
+
+Los resultados deberán mostrarse mediante listados con paginación para evitar que el sistema tenga que devolver todos los registros disponibles en una sola consulta. 
+
+Además, las consultas deberán diseñarse de manera eficiente para evitar operaciones repetitivas e innecesarias sobre la base de datos, especialmente cuando existan relaciones sobre bienes, responsables, ubicaciones, y otros elementos del sistema. 
+
+La información detallada de un bien podrá consultarse individualmente a partir de su identificador y, cuando responda, mediante el código QR asociado. 
+
+## 1.12 Archivos  y seguridad 
+
+El sistema deberá permitir la carga y conservación de documentos y fotografias relacionados con los bienes y sus adquisiciones. Debido a que estos archivos forman parte de la información del inventario, deberá establecerse condiciones adecuadas para su validación, almacenamiento y recuperación. 
+
+Los archivos deberán ser validados antes de almacenarse, considerando principalmente:
+
+- Tipos de archivos permitido.
+- Tamaño maximo. 
+- Condiciones de almacenamiento. 
+- Seguridad de los archivos.
+- Recuperación de la información. 
+- Crecimeinto del espacio de almacenamiento. 
+
+Entre los archivos que deberán contemplarse se encuentran documentos PDF, archivos XML y fotografías. 
+
+El almacenamiento deberá diseñarse de forma que pueda mantenerse organizado y que permita administrar un mayor volumen de archivos conforme crezca el inventario. 
+
+También deberán considerarse medidas para evitar que la carga de archivos permita incorporar información no autorizada o incompatible con las condiciones establecidas por el sistema. 
+
+Las mismas consideraciones deberán mantenerse en los ambientes de desarrollo y producción, tomando en cuenta las necesidades se seguridad y almacenamiento de cada ambiente. 
+
+Por ejemplo: 
+Usuario
+   ↓
+Sube archivo
+   ↓
+Validar tipo
+   ↓
+Validar tamaño
+   ↓
+Validar condiciones
+   ↓
+Almacenar
+
+## 1.13 Autenticación, autorización y registro de operaciones
+
+El sistema deberá contar con mecanismos de autenticación que permitan identificar a los usuarios que accedan al backend. 
+
+Además de identificar al usuario, el sistema deberá aplicar mecanismos de autorización para determinar qué operaciones puede realizar cada tipo de usuario de acuerdo con los permisos establecidos anteriormente. 
+
+Las operaciones que requieran permisos deberán ser rechazadas cuiando sean realizadas por usuarios que no tengan autorización suficiente. Las respuestas de la API deberán informar de manera clara cuando una operación no pueda realizarse debido a restricciones de acceso. 
+
+El sistema tambien deberá conservar un registro suficiente de las operaciones realizadas por los usuarios para facilitar la trazabilidad de las modificaciones efectuadas sobre la información del inventario. 
+
+Este registro deberá permitir relacionar las operaciones relevantes con el usuario que las realizo y conservar la información necesaria para revisar posteriormente las acciones efectuadas en el sistema. 
+
+La implementación especifica del mecanismo de autenticación, autorización y registro sera definido posteriormente durante el diseño del backend.
+
+# 2. Casos de uso y escenarios principales 
+Los casos de uso describen las principales operaciones que los usuarios podrán realizar dentro del sistema de inventario. Estos escenarios permiten definir el comportamiento esperado del backend antes de comenzar con la implementación técnica.
+
+## 2.1 Registrar un bien 
+Actor principal: Administrador u Operador 
+Objetivo: Registrar un bien dentro del inventario. 
+
+**Precondiciones:** 
+- El usuario debe haber iniciado sesión.
+- El usuario debe contar con permisos para registrar bienes. 
+
+**Flujo principal** 
+1. El usuario selecciona la operación para registrar un nuevo bien.
+2. El sistema solicita la información correspondiente al bien. 
+3. El usuario captura los datos disponibles.
+4. El sistema valida la información proporcionada. 
+5. El sistema verifica que los datos utilizados para identificar individualmente el bien no genera un registro duplicado. 
+6. El sistema registra el bien. 
+7. El sistema establece la información inicial correspondiente. 
+8. El sistema confirma que el registro fue creado correctamente. 
+
+**Resultado Esperado:** 
+El nuevo bien queda registrado en el inventario y puede ser consultado posteriormente por los usuarios que tengan permisos para hacerlo. 
 
 
 
