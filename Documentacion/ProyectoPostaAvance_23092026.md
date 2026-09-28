@@ -795,10 +795,117 @@ Objetivo: Registrar un bien dentro del inventario.
 **Resultado Esperado:** 
 El nuevo bien queda registrado en el inventario y puede ser consultado posteriormente por los usuarios que tengan permisos para hacerlo. 
 
+### 28/09/2026 12:00 - 14:00
 
 
+## 2.2 Consultar un bien 
+**Actor Principal**: Administrador, operador o Usuario de consultas
+**Objetivo**: Consultar la información de un bien registrado en el inventario 
+**Precondiciones**: 
+- El usuario debe haber iniciado sesión.
+- El usuario debe contar con permisos de consultas.
+- El bien debe encontrarse registrado en el sistema. 
 
+**Flujo principal**: 
+1. El usuario accede a la consulta de los bienes.
+2. El usuario busca o selecciona el bien que desea consultar.
+3. El sistema localiza el registro correspondiente. 
+4. El sistema verifica que el usuario tenga permisos para consultar la información. 
+5. El sistema recupera la información disponible del bien.
+6. El sistema muestra la ficha correspondiente. 
 
+**Información que podrá mostrarse: 
+- Identificación del bien.
+- Nombre y descripción.
+- Categoría.
+- Marca y modelo.
+- Número de serie, cuando corresponda. 
+- Estado actual.
+- Ubicación actual.
+- Responsable actual. 
+- Información relacionada con su adquisición 
+- Código QR asociado, cuando corresponda 
+
+**Flujo alternativo** 
+Si el bien solicitado no existe, el sistema deberá informar que no se encontró ningún registro correspondiente. 
+
+Si el usuario no cuenta con los permisos necesarios, el sistema deberá rechazar la consulta y devolver una respuesta clara 
+
+**Resultado Esperado** 
+El usuario puede consultar la información actual del bien sin modificar los datos almacenados en el inventario. 
+
+## 2.3 Modificar un bien.
+
+**Actor principal**: Administrador u Operador.
+
+**Objetivo**: Actualizar la información de un bien que ya se encuentra registrado en el inventario.
+
+**Precondiciones**: 
+- El usuario debe haber iniciado sesión. 
+- El usuario debe contar con permisos par modificar bienes. 
+- El bien debe existir dentro del sistema. 
+
+**Flujo principal**: 
+1. El usuario localiza el bien que desea modificar. 
+2. El sistema muestra la información actual del bien. 
+3. El usuario modifica uno o varios datos permitidos. 
+4. El sistema valida la nueva información.
+5. El sistema verifica que la modificación no genera información inválida o duplicada.
+6. El sistema actualiza los datos del bien. 
+7. Si el cambio afecta la ubicación, el responsable o el estado, el sistema deberá conservar el registro anterior dentro del historial. 
+8. El sistema registra al usuario que realizó la operación. 
+9. El sistema confirma que la modificación fue relizado correctamente. 
+
+**Flujos alternativos**
+
+- Si el bien no existe, el sistema deberá informar que no se encontró el registro solicitado.
+- Si el usuario no tiene permisos sificiente, la operación deberá ser rechazada.
+- Si los nuevos datos no cumplen con las reglas establecidas, el sistema no deberá realizar la modificación y deberá indicar el error correspondiente. 
+
+**Resultado esperado**
+La información actual del bien queda actualizada correctamente. Cuando la modificación corresponde a la ubicación, responsable o estado, el cambio anterior permanece disponible dentro del historial del archivo. 
+
+## 2.4 Cambiar ubicación de un bien 
+**Actor principal**: Administrador u Operador. 
+
+**Objetivo**: Registrar el traslado de un bien de una ubicación a otra dentro de la organización.
+
+**Precondiciones**: 
+- El usuario debe haber iniciado sesión. 
+- El usuario debe contar con permisos para modificar la ubicación de bienes. 
+- El bien debe encontrarse registrado en el sistema. 
+- La nueva ubicación debe existir dentro del catálogo de ubicaciones. 
+
+**Flujo Principal** 
+1. El usuario selecciona el bien que será trasladado. 
+2. El sistema muestra la ubicación actual del bien. 
+3. El usuario selecciona la nueva ubicación. 
+4. El usuario registra el motivo del cambio, cuando corresponda. 
+5. El sistema valida que la nueva ubicación sea válida. 
+6. El sistema actualiza la ubicación actual del bien. 
+7. El sistema genera un registro en el historial de movimientos. 
+8. El sistema almacena la ubicación anterior y la nueva ubicación. 
+9. El sistema registra la fecha del cambio y el usuario que realizó la operación. 
+10. El sistema confirma que el traslado fue realizado correctamente. 
+
+**Flujos alternativos** 
+- Si el bien no existe, el sistema deberá informar que no se encontró el registro. 
+- Si la nueva ubicación no existe, el sistema deberá impedir el cambio. 
+- Si el usuario no tiene permisos suficientes, la operación deberá ser rechazada. 
+
+**Información registrada en el historial**: 
+
+| Dato | Descripción |
+|---|---|
+| Bien | Activo que fue trasladado |
+| Ubicación anterior | Lugar donde se encontraba el bien  |
+| Nueva Ubicación | Lugar al que fue trasladado |
+| Fecha del cambio | Momento en que ocurrió el movimiento |
+| Usuario responsable | Persona que realizo la modificación |
+| Motivo | Razón del traslado, cuando aplique |
+
+**Resultado esperado** 
+El bien queda asociado a su nueva ubicación y el sistema conserva evidencia del movimiento realizado para futuras consultas. 
 
 
 
