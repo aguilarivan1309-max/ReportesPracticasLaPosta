@@ -907,6 +907,130 @@ La información actual del bien queda actualizada correctamente. Cuando la modif
 **Resultado esperado** 
 El bien queda asociado a su nueva ubicación y el sistema conserva evidencia del movimiento realizado para futuras consultas. 
 
+### 30/09/2026 13:00 - 15:00
+## 2.5 Asignación responsable a un bien 
+**Actor Principal**: Administrador u Operador.
+**Objetivo**: Asignar un bien a una persona responsable de su uso o resguardo 
+
+**Precondiciones**: 
+- El usuario debe haber iniciado sesión.
+- El usuario debe contar con permisos para realizar asignaciones.
+- El bien debe encontrarse registrado en el sistema. 
+- La persona responsable debe registrar en el sistema. 
+
+**Flujo principal**
+1. El usuario selecciona el bien que desea asignar. 
+2. EL sistema muestra la información actual del bien.
+3. El usuario selecciona a la persona que quedará como responsable. 
+4. El sistema verifica que el responsable seleccionado exista. 
+5. El sistema actualiza el responsable actual del bien. 
+6. El sistema genera un registro en el historial del activo. 
+7. El sistema conserva la información del responsable anterior, cuando exista.
+8. El sistema registra al nuevo responsable, la fecha del cambo y el usuario que realizó la operación.
+9. El sistema confirma que la asignación fue realizada correctamente. 
+
+**Flujos alternativos** 
+- Si el bien ni existe, el sistema deberá informar que no se encontró el registro solicitado.
+- Si el responsable seleccionado no existe, el sistema deberá impedir la asignación. 
+- Si el usuario no tiene permisos suficientes, la operación deberá ser rechazada.
+- Si el bien ya tiene asginado al mismo responsable, el sistema podrá informar que no existe ningún cambio que registrar. 
+
+**Información registrada en el historial**: 
+| Dato | Descripción |
+|---|---|
+| Bien | Activo al que se realizó la asignación |
+| Responsable anterior | Persona que tenía anteriormente el bien, cuando exista |
+| Nuevo Responsable | Persona que recibe el bien |
+| Usuario que realizó la operación | Usuario del sistema que registró el cambio |
+| Motivo | Razón de la asignación o cambio, cuando corresponda |
+
+**Resultados esperados**:
+El bien queda relacionado con su nuevo responsable y el sistema conserva el cambio dentro del historial para poder consiltar posteriormente quién tuvo el bien bajo su responsabilidad.
+
+## 2.6 Cambiar el estado de un bien 
+
+**Actor principal**: Administrador u Operador.
+
+**Objetivo**: Modificar el estado actual de un bien de acuerdo con su situación dentro de la organización.
+
+**Precondiciones**:
+- El usuario debe haber iniciado sesión.
+- El usuario debe contar con permisos para modificar el estado de los bienes. 
+- El bien debe encontrarse registrado en el sistema. 
+- El nuevo estado debe existir dentro de los estados permitidos. 
+
+**Flujo principal** 
+1. El usuario selecciona el bien cuyo estado desea modificar. 
+2. El sistema muestra el estado actual del bien. 
+3. El usuario selecciona el nuevo estado. 
+4. El usuario registra el motivo del cambio, cuando corresponda. 
+5. El sistema valida que el nuevo estado sea válido. 
+6. El sistema verifica que la transición entre el estado actual y el nuevo estado éste permitida. 
+7. El sistema actualiza el estado actual del bien. 
+8. El sistema genera un registro dentro del historial
+9. EL sistema conserva el estado anterior, el nuevo estado, la fecha del cambio y el usuario que realizó la operación. 
+10. El sistema confirma que el cambio fue realizado correctamente. 
+
+**Flujos alternativos** 
+- Si el bien no existe, el sistema deberá informar que no se encontró el registro solicitado. 
+- Si el nuevo estado no es válido, el sistema deberá rechazar la modificación.
+- Si la transición entre estados no está permitida, el sistema deberá impedir el cambio e informar le motivo. 
+- Si el usuario no cuenta con los permisos necesarios, la operación deberá ser rechazada. 
+- Si el nuevo estado es igual al estado actual, el sistema podra indicar que no existe ningun cambio que registrar. 
+
+
+**Información registrada enm el historial**
+
+| Dato | Descripción |
+|---|---|
+| Bien | Activo cuyo estado fue modificado |
+| Estado anterior | Estado que tenía antes del cambio |
+| Nuevo estado| Estado asignado al bien |
+| Fecha del cambio | Momento en que se realizó la modificación |
+| Usuario que realizó la operación | Usuario que registr´po el cambio |
+| Motivo | Razón del cambio, cuando corresponda |
+
+**Resultado esperado** 
+El bien queda asociado con su nuevo estado y el sustema conserva el cambio dentro de su historial para permitir la consulta de estados anteriores. 
+
+## 2.7 Registrar una adquisición y relacionarla con bienes 
+
+**Actor principal**: Administrador u Operador.
+**Objetivo**: Registrar un adquisición u relacionarla con uno o varios bienes del inventario. 
+
+**Precondiciones:** 
+- El usuario debe haber iniciado sesión.
+- El usuario debe contar con permisos para registrar adquisiciones. 
+- Los bienes que serán relacionados deberán encontrarse registrados en el msistema o ser incorporados como parte del proceso definido posteriormente. 
+
+**Flujo principal** 
+1. El usuario seleccionado la opción para registrar una nueva adquisición.
+2. El sistema solicita la información correspondiente a la compra. 
+3. El usuario captura los datos disponibles de la adquisición.
+4. El usuario adjunta los documentos relacionados, cuando correspondan. 
+5. El sistema valida la información proporcionada. 
+6. El sistema valida los archivos adjuntos de acuerdo con las reglas establecidas. 
+7. El sistema registra la adquisición. 
+8. El usuario selecciona uno o varios bienes que serán relacionados con la adquisición. 
+9. El sistema crea la relación entre la adquisición y los bienes correspondientes.
+10. El sistema confirma que la operación fue realizada correctamente. 
+
+**Archivos que podrán relacionarse con la adquisición: 
+- Factura.
+- Documento PDF.
+- Archivo XML. 
+- Fotografias.
+
+**Flujos alternativos**
+- Si la información de la adquisición no es válida, el sistema deberá impedir el registro e indicar los datos que deben corregirse. 
+- Si alguno de los archivos no cunple con las condiciones establecidas, el sistema deberá rechazar dichos archivos. 
+- Si uno de los bienes seleccionados no existe, el sistema deberá informar el error correspondiente. 
+- Si el usuario no cuenta con permisos suficientes, la operación deberá ser rechazada.
+
+**Resultados esperados**: 
+La adquisición queda registrada dentro del sistema y relacionada con los bienes correspondientes, permitiendo posteriormente consultar el origen de compra y la evidencia documental asociado. 
+
+
 
 
 
