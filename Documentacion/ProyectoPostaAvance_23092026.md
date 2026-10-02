@@ -1031,6 +1031,96 @@ El bien queda asociado con su nuevo estado y el sustema conserva el cambio dentr
 La adquisición queda registrada dentro del sistema y relacionada con los bienes correspondientes, permitiendo posteriormente consultar el origen de compra y la evidencia documental asociado. 
 
 
+### ### 02/09/2026 9:00 - 14:00
+
+
+## 2.8 Asociar o general un código QR para un bien. 
+**Actor Principal**: Administrador u Operador.
+
+**Objetivo**: Generar o asociar un código QR a un bien que requiera identificación individual.
+
+**Precondiciones**: 
+- El usuario debe haber iniciado sesión. 
+- El usuario debe contar con permisos para administrar códigos QR.
+- El bien debe encontrarse registrado en el sistema. 
+- El bien debe ser de un tipo que requiere identificación individual. 
+
+**Flujo principal**: 
+
+1. El usuario selecciona el bien al que desea asignar un código QR. 
+2. EL sistema verifica que el bien exista. 
+3. El sistema obtiene el identificador único correspondiente al bien. 
+4. El sistema genera o asocia un código QR utilizando dichos identificadores.
+5. El sistema relaciona el código QR con el bien. 
+6. El sistema verifica que el código generado permita localizar correctamente la ficha correspondiente.
+7. El sistema guarda la relación entre el bien y el código QR. 
+8. El sistema confirma que el QR fue asociado correctamente. 
+
+**Flujo alternativo**: 
+
+- Si el bien no existe, el sistema deberá informar que no se encontró el registro. 
+- Si el bien no requiere identificación individual, el sistema podrá impedir la generación del código QR. 
+- Si el usuario no cuenta con permisos suficientes, la operación deberá ser rechazada. 
+- Si el bien ya cuenta con un código QR asociado, el sistema deberá evitar duplicados o permitor una regeneración controlada cuando sea necesario. 
+- Si el código QE se encuentra dañado o deja de ser legible, deberá existir un mecanismo para general nuevamente la etiqueta sin perder la relación con el activo. 
+
+**Consideraciones de seguridad**: 
+
+EL código QR no deberá almacenar directamente la información sensible del bien. Su función principal será proporcionar una referencia que permita al sistema localizar la ficha correspondiente. 
+
+La información visible después de escanear el código dependera de los permisos y reglas de acceso definidos para el sistema. 
+
+**Resultado esperado**: 
+El bien queda asociado con un código QR funcional que permite localizar su ficha correspondiente sin depender de que la información actual del activo permanezca sin cambios. 
+
+## 2.9 Consultar un bien mediante código QR 
+
+**Actor principal**: Administrador, Operador o Usuario de consulta. 
+
+**Objetivo**: Localizar y consultar la ficha de un bien a partir de su código QR. 
+
+**Precondiciones**: 
+
+- El bien debe encontrarse registrado en el sistema. 
+- El bien debe contar con un código QR asociado. 
+- El código QR debe contener una referencia válida que permita localizar el registro correspondiente.
+
+**Flujo principal**: 
+
+1. El usuario escanea el código QR asociado al bien. 
+2. El sistema recibe el identificador contenido en el código. 
+3. El sistema busca el bien relacionado con dicho identificador. 
+4. El sistema verifica que el registro exista. 
+5. El sistema aplica las reglas de acceso correspondientes. 
+6. El sistema recupera la información permitida del bien. 
+7. El sistema muestra la ficha correspondiente al activo. 
+
+**Información que podrá mostrarse**: 
+
+- Identificador del bien. 
+- Nombre. 
+- Categoría. 
+- Marca y modelo. 
+- Estado actual. 
+- Ubicación actual.
+- Responsable actual, cuando los permisos lo permitan. 
+- Otra información autorizada de acuerdo con el tipo de usuario. 
+
+**Flujos alternativos** 
+
+- Si el código QR no corresponde a ningún bien registrado, el sistema deberá informar que no se encontró un registro válido. 
+- Si el código está dañado y no puede ser leído, deberá utilizarse otro mecanismo de búsqueda mediante el identificador del bien. 
+- Si el usuario intenta acceder a información para la que no tiene permisos, el sistema deberá limitar o rechazar el acceso correspondiente. 
+- Si el bien no se encuentra activo dentro del inventario, el sistema deberá mostrar su situación de acuerdo con las reglas establecidas. 
+
+**Consideraciones de seguridad**: 
+El código deberá utilizarse únicamente como medio de identificación. La lectura del código no deberá otorgar automáticamente acceso a información sensible. 
+
+El sistema será responsable de determinar qué información puede consultar cada usuario de acuerdo con sus permisos. 
+
+**Resultados esperados**
+
+El usuario puede identificar físicamente un bien mediante su código QR y acceder a la ficha conrrespondiente con la información permitida por el sistema. 
 
 
 
