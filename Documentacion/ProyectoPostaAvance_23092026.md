@@ -1031,7 +1031,7 @@ El bien queda asociado con su nuevo estado y el sustema conserva el cambio dentr
 La adquisición queda registrada dentro del sistema y relacionada con los bienes correspondientes, permitiendo posteriormente consultar el origen de compra y la evidencia documental asociado. 
 
 
-### ### 02/09/2026 9:00 - 14:00
+ ### 02/09/2026 9:00 - 14:00
 
 
 ## 2.8 Asociar o general un código QR para un bien. 
@@ -1123,8 +1123,385 @@ El sistema será responsable de determinar qué información puede consultar cad
 El usuario puede identificar físicamente un bien mediante su código QR y acceder a la ficha conrrespondiente con la información permitida por el sistema. 
 
 
+### 08/10/2026 9:00 - 14:00
+
+**Correcciones**
+**Regla 7. Origen del bien y documentación pendiente**
+
+El sistema deberá permitir registrar un bien aunque no se cuente con su factura o documento de origen. En ese caso, quedará marcado como pendiente de documentación, sin exigir uan relación con una compra o un detalle de adquisición.
+
+Cuando se conozca el origen, se indicará, si corresponde a una compra, donación, transferencia, arrendamiento o préstamo recibido. Si se desconose, se dejará pendiente de identificar. No deberán inventarse compras. proveedores, importantes o documentos para permitir el registro.
+
+Cuando se obtenga el documento, un usuario autorizado podrá incorporarlo y relacionarlo con el bien existente, sin crear otro registro ni modificar su idenficador o código QR. El sistema conservará su historial y registrará quién agregó el respaldo y en qué fecha. 
+
+Por ejemplo, una laptop que ya pertenece al inventario y no tiene factura disponible podrá registrarse con sus datos conocidos. Posteriormente se podrá adjuntar el documento correspondiente al mismo registro. 
+
+**2. Devolver un bien al almacén sin responsable**
+
+**Devolución de un bien al almacén**
+
+Un bien podrá permanecer en almacén sin una persona asignada como responsable. La persona que tiene el bien bajo resguardo es distinta del usuario que registra la operación.
+
+**Flujo de devolución**
+1. El usuario selecciona el bien que será devuelto.
+2. El sistema muestra su ubicación, responsable y estado actuales.
+3. El usuario selecciona el almacén de destino y registra el motivo de la devolución y la condición del bien.
+4. El sistema verifica los permisos del usuario y valida la información.
+5. El sistema actualiza la ubicación al almacén y deja vacío el responsable actual.
+6. Si el bien está en condiciones de utilizarse, queda disponible. Si presenta una falla, queda en revisión.
+7. El sistema conserva en el historial el responsable anterior, el nuevo responsable vacío, las ubicaciones y estados anteriores y nuevos, la fecha, el motivo y el usuario que registró la operación.
+8. El sistema confirma la devolución cuando todos los cambios y su historial se hayan guardado correctamente.
+
+**Resultados esperados**
+El bien queda registrado en el almacén, sin responsable asignado y con el estado correspondiente a su condición. El historial conserva quién lo tenía anteriormente y quién registró la devolución.
+
+Por ejemplo, si Ana devuelve una laptop en buen estado, el equipo queda disponible en almacén y sin responsable actual. Ana permanece registrada como responsable anterior.
+
+**3. Guardar eñ cambio y su historial juntos**
+
+**Consistencia entre la información actual y el historial**
+
+Cada cambio de ubicación, responsable o estado deberá guardarse junto con su historial como una sola operación. Si falla el guardado de cualquiera de sus partes, se cancelará toda la operación y se conservará la información anterior del bien.
+
+No deberá quedar un cambio aplicado sin su historial ni un registro histórico que indique una modificación que no se realizó. El sistema confirmará el éxito únicamente cuando ambas partes se hayan guardado correctamente.
+
+Esta regla deberá cumplirse desde cualquier parte del backend que permita modificar el inventario.
+
+**Modificaciones simultáneas**
+Si dos operadores intentan modificar el mismo bien al mismo tiempo, el sistema deberá evitar que uno sobrescriba los cambios del otro sin advertencia.
+
+Antes de guardar, se verificará que la información utilizada para realizar la modificación siga vigente. Si otro usuario ya cambió el bien, se rechazará la operación basada en la información anterior y se solicitará consultar los datos actualizados antes de intentarlo nuevamente.
+
+**Comprobaciones esperadas**
+
+- Una modificación correcta guarda tanto la situación actual como su historial. 
+- Si falla el guardado del historial, la situación actual del bien pertenece sin cambios. 
+- Si dos operadores modifican el mismo bien, no se pierde por una sobreescritura sin advertencia. 
+
+## 2.10 Consultar el historial de un bien 
+**Actor principal**: Administrador, Operador o Usuario de consulta.
+
+**Objetivo**: Consultar los cambios registrados sobre un bien para conocer sus ubicaciones, responsables y estados anteriores. 
+
+**Precondiciones**:
+- El usuario debe haber iniciado sesión. 
+- El usuario debe contar con permisos para consultar el historial. 
+- El bien debe encontrarse registrado en el sistema. 
+
+**Flujo principal**:
+1. El usuario busca y selecciona el bien que desea consultar.
+2. El sistema verifica que el bien exista y que el usuario tenga los permisos necesarios.
+3. El usuario selecciona la consulta del historial.
+4. El sistema recupera los cambios registrados sobre el bien.
+5. El sistema presenta los movimientos ordenados del más reciente al más antiguo y distribuidos en páginas.
+6. El usuario puede filtrar los registros por tipo de movimiento o periodo.
+7. El usuario selecciona un movimiento para consultar su detalle.
+8. El sistema muestra la información permitida de acuerdo con los permisos del usuario.
+
+**Información que podrá mostrarse:**
+
+| Dato | Descripción |
+|---|---|
+| Bien | Identificador del bien al que corresponde el movimiento |
+| Tipo de movimiento | Cambio de ubicación, asignación, devolución o cambio de estado |
+| Fecha y hora | Momento en que se registró la operación |
+| Información anterior | Ubicación, responsable o estado previo, segun el movimiento |
+|Ubicación nueva | Ubicación, responsable o estado resultante |
+| Usuario que registró la operación | Usuario del sistema que realizó el cambio |
+| Motivo | Razón registrada para realizar el movimiento, cuando corresponda |
+
+En una devolución al almacén, el nuevo responsable podrá aparecer como “Sin responsable asignado”. Esto no deberá confundirse con el usuario que registró la devolución, cuya identidad deberá conservarse.
+
+**Flujos alternativos**
+- Si el bien no existe, el sistema deberá informar que no se encontró el registro solicitado.
+- Si el usuario no cuenta con permisos suficientes, el sistema deberá rechazar la consulta.
+- Si el bien no tiene movimientos registrados, el sistema deberá informarlo sin tratarlo como un error.
+- Si los filtros no encuentran coincidencias, el sistema deberá mostrar un listado vacío e indicar que no existen movimientos con esos criterios.
+
+**Reglas de consultas**: 
+
+La consulta del historial no deberá permitir modificar ni eliminar los movimientos registrados.
+
+Los cambios de ubicación, responsable o estado deberán conservarse aunque posteriormente se realicen nuevas modificaciones sobre el bien.
+
+El historial permanecerá disponible para los usuarios autorizados cuando el bien esté dado de baja.
+
+**Resultado esperado:**
+El usuario puede consultar los cambios anteriores del bien y conocer cuándo ocurrieron, qué información cambió y quién registró cada operación, sin modificar la información histórica.
+
+## 2.11 Buscar, filtrar y ordenar bienes.
+
+**Actor principal:** Administrador, Operador o Usuario de consulta.
+
+**Objetivo:** Localizar bienes dentro del inventario mediante búsquedas, filtros y ordenamiento, sin tener que consultar todos los registros al mismo tiempo.
+
+**Precondiciones:**
+- El usuario debe haber iniciado sesión.
+- El usuario debe contar con permisos para consultar el inventario.
+
+**Flujo principal:**
+
+1. El usuario accede a la consulta del inventario.
+2. El sistema verifica sus permisos.
+3. El usuario introduce un término de búsqueda o selecciona uno o varios filtros.
+4. El sistema valida los criterios proporcionados.
+5. El sistema busca los bienes que coincidan con los criterios y que el usuario tenga autorización para consultar.
+6. El sistema ordena los resultados según la opción seleccionada. Si no se indica una, utiliza un orden predeterminado y estable.
+7. El sistema devuelve una página de resultados e indica cómo consultar las páginas restantes.
+8. El usuario puede cambiar los criterios o seleccionar un bien para consultar su ficha.
+
+| Criterio | Uso |
+|---|---|
+| Identificador del bien | Localizar un bien con seguimiento individual |
+| Nombre | Buscar bienes por su nombre |
+| Categoría o tipo del bien | Consultar bienes de una clasificación determinada |
+| Marca o modelo | Localizar bienes con esas características |
+| Numero de serie | Buscar un bien por su número de serie, cuando exista |
+| Ubicación actual| Consultar los bienes que se encuentran en un lugar |
+| Responsable actual  | Consultar los bienes asignados a una persona |
+| Sin Responsable asignado  | Identificar bienes que no tienen una persona asignada |
+| Estado Actual | Consultar bienes disponibles, en uso, en revisión o dados de baja |
+| Documentación pendiente | Identificar bienes cuyo documento de origen todavía no se ha incorporado |
+
+**Ordenamiento:**
+
+Los resultados podrán ordenarse por identificador, nombre o fecha de registro, de manera ascendente o descendente.
+
+Cuando varios bienes tengan el mismo valor en el campo seleccionado, el sistema utilizará un criterio adicional único para mantener un orden estable.
+
+**Flujos alternativos:**
+
+Si no existen bienes que coincidan con los criterios, el sistema devolverá un listado vacío e informará que no se encontraron resultados.
+
+Si el usuario no proporciona criterios, el sistema devolverá la primera página de los bienes que tenga permiso para consultar.
+
+Si un filtro, campo de ordenamiento o parámetro de paginación no es válido, el sistema rechazará la solicitud e indicará qué debe corregirse.
+
+Si el usuario no cuenta con permisos de consulta, el sistema rechazará la operación.
+
+**Reglas de consulta:**
+
+Los filtros seleccionados deberán aplicarse de forma conjunta. Por ejemplo, al seleccionar una ubicación y un estado, se mostrarán únicamente los bienes que cumplan ambas condiciones.
+
+Los campos que no correspondan a un tipo de bien podrán permanecer vacíos. Un artículo controlado por cantidad no deberá requerir un número de serie individual para aparecer en los resultados.
+
+El sistema establecerá un tamaño predeterminado y un límite máximo de resultados por página. Sus valores se definirán durante el diseño técnico.
+
+Las búsquedas y los filtros deberán respetar los permisos del usuario y no permitir el acceso a información restringida.
+
+Las consultas no deberán modificar los bienes ni su historial.
+
+**Resultado esperado:**
+
+El usuario puede localizar los bienes que necesita mediante resultados ordenados y paginados, consultar su información autorizada y acceder a la ficha de un bien específico.
+
+## 2.12 Incorporar documentos y fotografias a
+
+**Actor principal:** Administrador u Operador
+
+**Objetivo**: Incorporar documentos y fotografias un bien o a su adquisición u otro origen, incluyendo el respaldo que se encuentre pendiente de documentación 
+
+**Precondiciones:**
+- El usuario debe haber iniciado sesión.
+- El usuario debe contar con permisos para cargar archivos.
+- El bien o registro de origen al que se asociará el archivo debe existir.
+
+**Flujo principal:**
+1. El usuario selecciona el bien o registro de origen correspondiente.
+2. El sistema verifica que el registro exista y que el usuario tenga permisos para incorporar archivos.
+3. El usuario selecciona el archivo e indica qué tipo de evidencia representa.
+4. El sistema valida su tamaño, extensión, tipo y contenido, de acuerdo con las condiciones permitidas.
+5. El sistema genera un nombre interno seguro y almacena el archivo.
+6. El sistema relaciona el archivo con el registro seleccionado.
+7. El sistema registra el tipo de evidencia, la fecha de carga y el usuario que realizó la operación.
+8. Si el archivo completa la documentación de origen pendiente, el sistema verifica que corresponda al bien y actualiza esa condición.
+9. El sistema confirma que el archivo quedó almacenado y asociado correctamente.
+
+**Archivos contemplados**
+| Archivo | Uso |
+|---|---|
+| PDF | Facturas y otros documentos de respaldo |
+| XML | Archivo electrónico asociado a una factura |
+| Fotografía | Evidencia visual del bien o de su documentación |
+
+Las extensiones de imagen permitidas y los tamaños máximos se definirán durante el diseño técnico.
+
+**Flujos alternativos:**
+- Si el registro seleccionado no existe, el sistema rechazará la operación.
+- Si el usuario no tiene permisos suficientes, el sistema impedirá la carga.
+- Si el archivo supera el tamaño permitido o su tipo o contenido no es válido, el sistema lo rechazará e indicará el motivo.
+- Si ocurre un error al almacenar el archivo o asociarlo al registro, el sistema informará que la operación no se completó. No deberá conservar una asociación que apunte a un archivo inexistente; si quedó un archivo almacenado sin asociación, deberá eliminarlo o gestionar su limpieza.
+- Si el archivo no completa el respaldo de origen requerido, el bien continuará marcado como pendiente de documentación.
+
+**Reglas de seguridad y conservación:**
+
+El sistema no deberá confiar únicamente en la extensión o en el nombre proporcionado por el usuario para aceptar un archivo.
+
+Los documentos y fotografías deberán almacenarse de manera que su consulta respete los permisos del sistema. Conocer la dirección de un archivo o escanear el QR del bien no deberá permitir acceder automáticamente a documentos restringidos.
+
+Agregar un archivo no deberá eliminar ni sobrescribir silenciosamente la evidencia existente.
+
+Una fotografía del equipo no será suficiente por sí sola para retirar la condición de documentación de origen pendiente.
+
+Cuando se incorpore posteriormente un documento de origen, se utilizará el mismo registro del bien y se conservarán su identificador, código QR e historial.
+
+**Resultado esperado:**
+
+El documento o fotografía queda almacenado y relacionado con el registro correspondiente, con información sobre quién lo incorporó y cuándo. Los usuarios autorizados pueden consultarlo y la condición de documentación pendiente se actualiza únicamente cuando se completa el respaldo correspondiente.
+
+## 2.13 Registrar entradas y salidas por cantidad 
+
+**Actor principal:** Administrador u Operador.
+
+**Objetivo:** Registrar entradas y salidas de artículos que se administran por cantidad, manteniendo actualizadas sus existencias y conservando el historial de los movimientos.
+
+**Precondiciones:**
+
+- El usuario debe haber iniciado sesión.
+- El usuario debe contar con permisos para registrar movimientos de existencias.
+- El artículo debe estar registrado y definido como un artículo controlado por cantidad.
+- La ubicación donde se realizará el movimiento debe existir.
+- El artículo debe tener definida su unidad de medida.
+
+
+**Flujo principal:**
+1. El usuario selecciona el artículo y la ubicación correspondiente.
+2. El sistema muestra la cantidad disponible y su unidad de medida.
+3. El usuario selecciona si registrará una entrada o una salida.
+4. El usuario captura la cantidad y el motivo del movimiento.
+5. El sistema verifica los permisos y valida que la cantidad sea mayor que cero y compatible con la unidad de medida.
+6. Si se trata de una salida, el sistema comprueba que exista cantidad suficiente en la ubicación seleccionada.
+7. El sistema aumenta las existencias cuando se registra una entrada o las disminuye cuando se registra una salida.
+8. En la misma operación, el sistema registra el movimiento con la cantidad anterior, la cantidad del movimiento, la cantidad resultante, la fecha y el usuario que lo realizó.
+9. El sistema confirma la operación únicamente cuando las existencias y su historial se hayan guardado correctamente.
+
+**Información registrada en el movimiento**: 
+**Archivos contemplados**
+| Dato | Descripción |
+|---|---|
+| Articulo | Bien controlado por cantidad |
+| Ubicación | Lugar donde aumentan o disminuyen las existencias |
+| Tipo de movimiento | Entrada o salida |
+| Cantidad del movimiento | Cantidad que ingresa o se retira |
+| Unidad de medida | Unidad utilizada para controlar el artículo |
+| Cantidad anterior | Existencias antes de la operación |
+| Cantidad resultante |Existencias después de la operación |
+| Fecha y hora | Momento en que se registró el movimiento |
+| Usuario | Persona que registró la operación en el sistema |
+| Motivo | Razón de la entrada o salida |
+| Documento de respaldo | Referencia al documento relacionado, cuando esté disponible |
+
+**Flujos alternativos:**
+
+- Si el artículo o la ubicación no existen, el sistema rechazará la operación.
+- Si el artículo requiere seguimiento individual, el sistema impedirá utilizar este procedimiento e indicará que debe registrarse mediante el control individual correspondiente.
+- Si la cantidad es cero, negativa o incompatible con la unidad de medida, el sistema rechazará el movimiento.
+- Si la salida supera las existencias disponibles en la ubicación seleccionada, el sistema impedirá la operación.
+- Si el usuario no cuenta con permisos suficientes, el sistema rechazará el movimiento.
+- Si otro usuario modifica las existencias después de que fueron consultadas, el sistema rechazará la operación basada en información anterior y solicitará revisar la cantidad actualizada.
+- Si falla el guardado de las existencias o del historial, el sistema cancelará toda la operación y conservará la cantidad anterior.
+
+**Reglas de control:**
+
+Las existencias deberán controlarse por artículo y ubicación. Una salida no podrá utilizar automáticamente cantidades disponibles en otra ubicación.
+
+No se permitirán existencias negativas.
+
+Los artículos administrados por unidades completas deberán utilizar cantidades enteras. Cuando se requieran cantidades fraccionarias, estas deberán corresponder a una unidad de medida definida para el artículo.
+
+Cada entrada o salida deberá conservarse como un movimiento consultable. No se deberá modificar directamente la cantidad disponible sin registrar la operación que justifica el cambio.
+
+El control por cantidad no requiere crear un registro ni un historial por cada unidad física. Sin embargo, deberá conservarse el historial de entradas y salidas del artículo.
+
+Los consumibles definidos como serializados deberán seguir el procedimiento de control individual, aunque pertenezcan a una categoría de consumibles.
+
+**Ejemplo:**
+
+Si existen 20 cables en el almacén y un operador registra la salida de 3, el sistema deberá dejar 17 disponibles y conservar el movimiento con las cantidades anterior y resultante.
+
+Si posteriormente se intenta registrar una salida de 18 cables, el sistema deberá rechazarla por falta de existencias.
+
+**Resultado esperado:**
+
+Las existencias del artículo quedan actualizadas en la ubicación correspondiente y cada entrada o salida permanece registrada, permitiendo conocer cuánto había, cuánto se movió, cuánto quedó y quién realizó la operación.
+
+## 2.14 Instalar o retirar un componente
+
+**Actor principal:** Administrador u Operador.
+
+**Objetivo:** Registrar la instalación o el retiro de un componente con seguimiento individual, conservando su relación actual con un equipo y el historial de instalaciones anteriores.
+
+**Precondiciones:**
+
+- El usuario debe haber iniciado sesión.
+- El usuario debe contar con permisos para registrar instalaciones y retiros.
+- El componente y el equipo deben existir en el inventario.
+- El componente debe estar definido para seguimiento individual.
+- Para una instalación, el componente no debe encontrarse instalado en otro equipo.
+- Para un retiro, debe existir una instalación vigente del componente en el equipo seleccionado.
+
+**Flujo principal para instalar un componente:**
+1. El usuario selecciona el componente que desea instalar.
+2. El sistema muestra su estado, ubicación y relación actual con algún equipo, cuando exista.
+3. El usuario selecciona el equipo de destino y registra el motivo de la instalación.
+4. El sistema verifica los permisos y comprueba que el componente esté disponible para instalarse.
+5. El sistema valida que el equipo de destino pueda recibir componentes y que los estados de ambos bienes permitan la operación.
+6. El sistema registra la relación entre el componente y el equipo, junto con la fecha de instalación.
+7. El sistema actualiza la situación del componente para indicar que está instalado y que su ubicación corresponde a la del equipo.
+8. En la misma operación, el sistema registra el movimiento en el historial e identifica al usuario que lo realizó.
+9. El sistema confirma la instalación cuando todos los cambios se hayan guardado correctamente.
 
 
 
+**Flujo para retirar un componente:**
 
+1. El usuario selecciona el equipo y el componente instalado que desea retirar.
+2. El sistema verifica que la relación de instalación siga vigente.
+3. El usuario registra el motivo del retiro, la ubicación de destino y la condición del componente.
+4. El sistema valida los permisos y la información proporcionada.
+5. El sistema registra la fecha de retiro y finaliza la relación de instalación, conservándola en el historial.
+6. El sistema actualiza la ubicación y el estado del componente. Si puede utilizarse nuevamente, queda disponible; si presenta una falla, queda en revisión.
+7. En la misma operación, el sistema registra los datos anteriores y nuevos, la fecha y el usuario que realizó el retiro.
+8. El sistema confirma el retiro cuando todos los cambios se hayan guardado correctamente.
 
+**Información registrada en el historial:**
+| Dato | Descripción |
+|---|---|
+| Componente | Identificador del componente instalado o retirado |
+| Equipo | Identificador del equipo relacionado |
+| Tipo de movimiento | Instalación o retiro |
+| Fecha y hora | Momento en que se registró la operación |
+| Ubicación anterior y nueva | Ubicaciones del componente antes y después del movimiento |
+| Estado anterior y nuevo | Situación del componente antes y después de la operación |
+| Usuario | Usuario del sistema que registró el movimiento |
+| Motivo | Razón de la instalación o del retiro |
+
+**Flujos alternativos:**
+
+- Si el componente o el equipo no existen, el sistema rechazará la operación.
+- Si el componente ya está instalado en otro equipo, el sistema impedirá una nueva instalación hasta que se registre su retiro.
+- Si el componente ya está instalado en el equipo seleccionado, el sistema informará que la relación ya existe y no generará otra instalación.
+- Si se intenta retirar un componente que no está instalado en el equipo seleccionado, el sistema rechazará la operación.
+- Si los estados del componente o del equipo no permiten la operación, el sistema informará el motivo del rechazo.
+- Si la ubicación de destino del retiro no existe, el sistema impedirá la operación.
+- Si el usuario no tiene permisos suficientes, el sistema rechazará el movimiento.
+- Si otro usuario modificó la información después de su consulta, el sistema solicitará revisar los datos actualizados antes de continuar.
+- Si falla el guardado de la relación, la situación actual o el historial, el sistema cancelará toda la operación y conservará la información anterior.
+
+**Reglas de relación y trazabilidad:**
+
+Un componente no podrá tener más de una instalación vigente al mismo tiempo.
+
+El sistema deberá impedir que un bien se instale dentro de sí mismo o que se formen relaciones circulares entre bienes.
+
+Retirar un componente no deberá eliminar su registro ni las instalaciones anteriores. Si posteriormente se instala en otro equipo, conservará su identificador y su historial.
+
+Mientras permanezca instalado, la ubicación del componente deberá corresponder a la del equipo que lo contiene. Un traslado del equipo deberá mantener esa coherencia y permitir rastrear el cambio de ubicación del componente.
+
+Este procedimiento corresponde a componentes con seguimiento individual. Las piezas controladas únicamente por cantidad se administrarán mediante sus movimientos de existencias.
+
+El registro de una instalación o retiro no implica implementar un módulo completo de reparaciones o mantenimiento en esta etapa.
+
+**Resultado esperado:**
+
+El sistema permite conocer qué componentes están instalados actualmente en un equipo y consultar dónde estuvo instalado cada componente anteriormente, sin duplicar registros ni perder su historial.
