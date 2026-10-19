@@ -1122,14 +1122,6 @@ El sistema será responsable de determinar qué información puede consultar cad
 
 El usuario puede identificar físicamente un bien mediante su código QR y acceder a la ficha conrrespondiente con la información permitida por el sistema. 
 
-## 3. Reglas de negocio consolidadas
-
-<<<<<<< HEAD
-Las siguientes reglas establecen las condiciones que deberán cumplir las operaciones del inventario. Se aplicarán desde cualquier parte del backend que permita registrar o modificar información.
-=======
-
->>>>>>> origin/main
-
 ### 08/10/2026 9:00 - 14:00
 
 **Correcciones**
@@ -1457,13 +1449,68 @@ Las existencias del artículo quedan actualizadas en la ubicación correspondien
 7. El sistema actualiza la situación del componente para indicar que está instalado y que su ubicación corresponde a la del equipo.
 8. En la misma operación, el sistema registra el movimiento en el historial e identifica al usuario que lo realizó.
 9. El sistema confirma la instalación cuando todos los cambios se hayan guardado correctamente.
->>>>>>> origin/main
+
+**Flujo para retirar un componente:**
+
+1. El usuario selecciona el equipo y el componente instalado que desea retirar.
+2. El sistema verifica que la relación de instalación siga vigente.
+3. El usuario registra el motivo del retiro, la ubicación de destino y la condición del componente.
+4. El sistema valida los permisos y la información proporcionada.
+5. El sistema registra la fecha de retiro y finaliza la relación de instalación, conservándola en el historial.
+6. El sistema actualiza la ubicación y el estado del componente. Si puede utilizarse nuevamente, queda disponible; si presenta una falla, queda en revisión.
+7. En la misma operación, el sistema registra los datos anteriores y nuevos, la fecha y el usuario que realizó el retiro.
+8. El sistema confirma el retiro cuando todos los cambios se hayan guardado correctamente.
+
+**Información registrada en el historial:**
+| Dato | Descripción |
+|---|---|
+| Componente | Identificador del componente instalado o retirado |
+| Equipo | Identificador del equipo relacionado |
+| Tipo de movimiento | Instalación o retiro |
+| Fecha y hora | Momento en que se registró la operación |
+| Ubicación anterior y nueva | Ubicaciones del componente antes y después del movimiento |
+| Estado anterior y nuevo | Situación del componente antes y después de la operación |
+| Usuario | Usuario del sistema que registró el movimiento |
+| Motivo | Razón de la instalación o del retiro |
+
+**Flujos alternativos:**
+
+- Si el componente o el equipo no existen, el sistema rechazará la operación.
+- Si el componente ya está instalado en otro equipo, el sistema impedirá una nueva instalación hasta que se registre su retiro.
+- Si el componente ya está instalado en el equipo seleccionado, el sistema informará que la relación ya existe y no generará otra instalación.
+- Si se intenta retirar un componente que no está instalado en el equipo seleccionado, el sistema rechazará la operación.
+- Si los estados del componente o del equipo no permiten la operación, el sistema informará el motivo del rechazo.
+- Si la ubicación de destino del retiro no existe, el sistema impedirá la operación.
+- Si el usuario no tiene permisos suficientes, el sistema rechazará el movimiento.
+- Si otro usuario modificó la información después de su consulta, el sistema solicitará revisar los datos actualizados antes de continuar.
+- Si falla el guardado de la relación, la situación actual o el historial, el sistema cancelará toda la operación y conservará la información anterior.
+
+**Reglas de relación y trazabilidad:**
+
+Un componente no podrá tener más de una instalación vigente al mismo tiempo.
+
+El sistema deberá impedir que un bien se instale dentro de sí mismo o que se formen relaciones circulares entre bienes.
+
+Retirar un componente no deberá eliminar su registro ni las instalaciones anteriores. Si posteriormente se instala en otro equipo, conservará su identificador y su historial.
+
+Mientras permanezca instalado, la ubicación del componente deberá corresponder a la del equipo que lo contiene. Un traslado del equipo deberá mantener esa coherencia y permitir rastrear el cambio de ubicación del componente.
+
+Este procedimiento corresponde a componentes con seguimiento individual. Las piezas controladas únicamente por cantidad se administrarán mediante sus movimientos de existencias.
+
+El registro de una instalación o retiro no implica implementar un módulo completo de reparaciones o mantenimiento en esta etapa.
+
+**Resultado esperado:**
+
+El sistema permite conocer qué componentes están instalados actualmente en un equipo y consultar dónde estuvo instalado cada componente anteriormente, sin duplicar registros ni perder su historial.
+
+## 3. Reglas de negocio consolidadas
+
+Las siguientes reglas establecen las condiciones que deberán cumplir las operaciones del inventario. Se aplicarán desde cualquier parte del backend que permita registrar o modificar información.
 
 ### 3.1 Identificación única y prevención de duplicados
 
 Cada bien que requiera seguimiento individual deberá contar con un identificador interno único y estable.
 
-<<<<<<< HEAD
 El identificador se conservará aunque cambien la ubicación, el responsable, el estado o los documentos relacionados con el bien. Tampoco deberá reutilizarse para identificar otro bien cuando el registro original sea dado de baja.
 
 El sistema deberá impedir el registro de dos bienes con el mismo identificador interno.
@@ -1967,56 +2014,3 @@ Se podrá avanzar al diseño técnico cuando:
 El diseño técnico deberá explicar cómo se cumplirán estas reglas mediante la organización del backend, la base de datos, los permisos, los archivos y las pruebas.
 
 La construcción definitiva deberá comenzar después de la revisión de la propuesta funcional y técnica, conforme a la guía del proyecto.
-=======
-**Flujo para retirar un componente:**
-
-1. El usuario selecciona el equipo y el componente instalado que desea retirar.
-2. El sistema verifica que la relación de instalación siga vigente.
-3. El usuario registra el motivo del retiro, la ubicación de destino y la condición del componente.
-4. El sistema valida los permisos y la información proporcionada.
-5. El sistema registra la fecha de retiro y finaliza la relación de instalación, conservándola en el historial.
-6. El sistema actualiza la ubicación y el estado del componente. Si puede utilizarse nuevamente, queda disponible; si presenta una falla, queda en revisión.
-7. En la misma operación, el sistema registra los datos anteriores y nuevos, la fecha y el usuario que realizó el retiro.
-8. El sistema confirma el retiro cuando todos los cambios se hayan guardado correctamente.
-
-**Información registrada en el historial:**
-| Dato | Descripción |
-|---|---|
-| Componente | Identificador del componente instalado o retirado |
-| Equipo | Identificador del equipo relacionado |
-| Tipo de movimiento | Instalación o retiro |
-| Fecha y hora | Momento en que se registró la operación |
-| Ubicación anterior y nueva | Ubicaciones del componente antes y después del movimiento |
-| Estado anterior y nuevo | Situación del componente antes y después de la operación |
-| Usuario | Usuario del sistema que registró el movimiento |
-| Motivo | Razón de la instalación o del retiro |
-
-**Flujos alternativos:**
-
-- Si el componente o el equipo no existen, el sistema rechazará la operación.
-- Si el componente ya está instalado en otro equipo, el sistema impedirá una nueva instalación hasta que se registre su retiro.
-- Si el componente ya está instalado en el equipo seleccionado, el sistema informará que la relación ya existe y no generará otra instalación.
-- Si se intenta retirar un componente que no está instalado en el equipo seleccionado, el sistema rechazará la operación.
-- Si los estados del componente o del equipo no permiten la operación, el sistema informará el motivo del rechazo.
-- Si la ubicación de destino del retiro no existe, el sistema impedirá la operación.
-- Si el usuario no tiene permisos suficientes, el sistema rechazará el movimiento.
-- Si otro usuario modificó la información después de su consulta, el sistema solicitará revisar los datos actualizados antes de continuar.
-- Si falla el guardado de la relación, la situación actual o el historial, el sistema cancelará toda la operación y conservará la información anterior.
-
-**Reglas de relación y trazabilidad:**
-
-Un componente no podrá tener más de una instalación vigente al mismo tiempo.
-
-El sistema deberá impedir que un bien se instale dentro de sí mismo o que se formen relaciones circulares entre bienes.
-
-Retirar un componente no deberá eliminar su registro ni las instalaciones anteriores. Si posteriormente se instala en otro equipo, conservará su identificador y su historial.
-
-Mientras permanezca instalado, la ubicación del componente deberá corresponder a la del equipo que lo contiene. Un traslado del equipo deberá mantener esa coherencia y permitir rastrear el cambio de ubicación del componente.
-
-Este procedimiento corresponde a componentes con seguimiento individual. Las piezas controladas únicamente por cantidad se administrarán mediante sus movimientos de existencias.
-
-El registro de una instalación o retiro no implica implementar un módulo completo de reparaciones o mantenimiento en esta etapa.
-
-**Resultado esperado:**
-
-El sistema permite conocer qué componentes están instalados actualmente en un equipo y consultar dónde estuvo instalado cada componente anteriormente, sin duplicar registros ni perder su historial.
