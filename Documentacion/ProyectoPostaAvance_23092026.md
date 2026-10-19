@@ -1122,7 +1122,6 @@ El sistema será responsable de determinar qué información puede consultar cad
 
 El usuario puede identificar físicamente un bien mediante su código QR y acceder a la ficha conrrespondiente con la información permitida por el sistema. 
 
-
 ### 08/10/2026 9:00 - 14:00
 
 **Correcciones**
@@ -1451,8 +1450,6 @@ Las existencias del artículo quedan actualizadas en la ubicación correspondien
 8. En la misma operación, el sistema registra el movimiento en el historial e identifica al usuario que lo realizó.
 9. El sistema confirma la instalación cuando todos los cambios se hayan guardado correctamente.
 
-
-
 **Flujo para retirar un componente:**
 
 1. El usuario selecciona el equipo y el componente instalado que desea retirar.
@@ -1505,3 +1502,515 @@ El registro de una instalación o retiro no implica implementar un módulo compl
 **Resultado esperado:**
 
 El sistema permite conocer qué componentes están instalados actualmente en un equipo y consultar dónde estuvo instalado cada componente anteriormente, sin duplicar registros ni perder su historial.
+
+## 3. Reglas de negocio consolidadas
+
+Las siguientes reglas establecen las condiciones que deberán cumplir las operaciones del inventario. Se aplicarán desde cualquier parte del backend que permita registrar o modificar información.
+
+### 3.1 Identificación única y prevención de duplicados
+
+Cada bien que requiera seguimiento individual deberá contar con un identificador interno único y estable.
+
+El identificador se conservará aunque cambien la ubicación, el responsable, el estado o los documentos relacionados con el bien. Tampoco deberá reutilizarse para identificar otro bien cuando el registro original sea dado de baja.
+
+El sistema deberá impedir el registro de dos bienes con el mismo identificador interno.
+
+El número de serie será un dato complementario cuando exista. No sustituirá al identificador interno ni se exigirá a bienes que no cuenten con él. El criterio para detectar números de serie duplicados deberá definirse durante la revisión del diseño.
+
+Los artículos controlados por cantidad tendrán una referencia de catálogo, sin exigir un identificador por cada unidad física.
+
+### 3.2 Información obligatoria según el tipo de bien
+
+La información requerida deberá corresponder a la forma de control del bien.
+
+| Forma de control | Información mínima |
+|---|---|
+| Individual | Identificador interno, nombre, categoría o tipo, estado, ubicación y fecha de registro |
+| Por cantidad | Referencia del artículo, nombre, categoría o tipo, unidad de medida y ubicación de las existencias |
+
+La marca, el modelo y el número de serie se registrarán cuando correspondan y estén disponibles. Los datos desconocidos no deberán sustituirse por información inventada.
+
+El responsable podrá quedar vacío cuando el bien no esté asignado a una persona.
+
+La factura, el documento de origen y la fecha de adquisición no serán requisitos que impidan registrar bienes cuya documentación todavía no esté disponible.
+
+El sistema registrará automáticamente la fecha de alta y el usuario que realizó la operación.
+
+### 3.3 Control individual y control por cantidad
+
+El sistema distinguirá entre bienes con seguimiento individual y artículos administrados por cantidad.
+
+Los bienes individuales tendrán información propia sobre su ubicación, responsable, estado e historial.
+
+Los artículos controlados por cantidad mantendrán existencias por ubicación y un historial de entradas y salidas, sin generar un registro por cada unidad física.
+
+La categoría del artículo no determinará por sí sola su forma de control. Por ejemplo, un consumible podrá requerir seguimiento individual cuando sea necesario conocer en qué equipo se instaló.
+
+Una misma existencia física no deberá registrarse simultáneamente como bien individual y como cantidad disponible, porque se duplicaría el inventario.
+
+Cambiar la forma de control de un artículo con movimientos previos requerirá un procedimiento definido y revisado. No deberá realizarse como una edición ordinaria que elimine su trazabilidad.
+
+### 3.4 Registro de bienes sin factura o documento de origen
+
+El sistema permitirá registrar un bien aunque no exista una factura disponible.
+
+Cuando se cuente con otro respaldo válido, como un documento de donación, transferencia, arrendamiento o préstamo recibido, este podrá relacionarse con el bien. La ausencia de factura no implicará necesariamente que falte documentación.
+
+Cuando no exista el respaldo correspondiente, el bien quedará marcado como **pendiente de documentación**. Su relación con un documento o detalle de adquisición podrá permanecer vacía.
+
+Se registrará el origen conocido del bien. Si no se conoce, se indicará que está pendiente de identificar.
+
+No deberán crearse compras, facturas, proveedores o importes ficticios para permitir el alta.
+
+### 3.5 Incorporación posterior de documentos
+
+Un usuario autorizado podrá incorporar posteriormente el documento de origen al registro existente.
+
+La incorporación deberá conservar el identificador del bien, su código QR y su historial. No deberá generar otro bien para representar el mismo equipo.
+
+El sistema registrará quién incorporó el documento y cuándo.
+
+La condición de documentación pendiente se retirará únicamente cuando el respaldo correspondiente haya sido incorporado y validado. Una fotografía del equipo no será suficiente por sí sola para acreditar su origen.
+
+Un mismo documento podrá respaldar varios bienes. Agregar evidencia no deberá sobrescribir ni eliminar silenciosamente documentos existentes.
+
+### 3.6 Asignación de responsables y devolución al almacén
+
+El responsable representa a la persona que tiene un bien asignado o bajo resguardo. El usuario que registra una operación representa a quien captura el movimiento en el sistema. Ambas funciones deberán distinguirse.
+
+Un bien podrá permanecer sin responsable asignado cuando se encuentre en almacén.
+
+Al devolver un bien al almacén, el sistema deberá:
+
+- Registrar la ubicación de destino.
+- Retirar la asignación actual cuando corresponda.
+- Conservar al responsable anterior en el historial.
+- Registrar la condición del bien.
+- Establecer un estado coherente con esa condición.
+- Identificar al usuario que registró la devolución.
+
+Si el bien está en condiciones de utilizarse, quedará disponible. Si presenta una falla, quedará en revisión.
+
+No deberá crearse una persona ficticia llamada “Almacén” para representar la ausencia de responsable.
+
+### 3.7 Estados y transiciones permitidas
+
+Cada bien con seguimiento individual tendrá un estado actual coherente con su condición.
+
+Como base inicial se consideran:
+
+| Estado | Significado |
+|---|---|
+| Disponible | El bien puede asignarse o utilizarse |
+| En uso | El bien está asignado o desempeña una función operativa |
+| En revisión | El bien requiere una evaluación antes de volver a utilizarse |
+| Dado de baja | El bien ya no está disponible para la operación |
+
+El catálogo definitivo y las transiciones permitidas deberán revisarse antes de implementar los modelos. Los consumibles serializados podrán requerir estados específicos, como nuevo, instalado o agotado.
+
+Se deberán cumplir las siguientes condiciones:
+
+- Un bien dado de baja no podrá asignarse como si estuviera disponible.
+- Un cambio hacia el mismo estado no deberá generar un movimiento ficticio.
+- Un cambio de estado no deberá borrar el historial.
+- La devolución al almacén no significará automáticamente que el bien está disponible; deberá considerarse su condición.
+- El estado, la ubicación y el responsable deberán mantener una situación coherente.
+
+Representar un bien como dado de baja y conservar su historial forma parte del inventario. Un procedimiento completo de autorización, disposición final y documentación de bajas queda para una fase posterior.
+
+### 3.8 Instalación y retiro de componentes
+
+Un componente con seguimiento individual podrá tener como máximo una instalación vigente.
+
+El sistema impedirá que un componente aparezca instalado en dos equipos al mismo tiempo, que un bien se instale dentro de sí mismo o que se formen relaciones circulares.
+
+Antes de instalar un componente en otro equipo deberá registrarse su retiro de la instalación anterior.
+
+El retiro finalizará la relación vigente, pero conservará sus fechas y antecedentes. El componente mantendrá su identificador.
+
+Mientras esté instalado, su ubicación deberá corresponder a la del equipo que lo contiene. Los traslados del equipo deberán mantener esa coherencia y permitir consultar el recorrido del componente.
+
+Las piezas administradas únicamente por cantidad se controlarán mediante movimientos de existencias.
+
+### 3.9 Entradas, salidas y disponibilidad de existencias
+
+Las existencias se controlarán por artículo y ubicación.
+
+Cada entrada o salida tendrá una cantidad mayor que cero y una unidad de medida válida. Los artículos controlados por piezas completas utilizarán cantidades enteras.
+
+Una salida no podrá superar la cantidad disponible en la ubicación seleccionada. No se permitirán existencias negativas.
+
+La cantidad disponible solo podrá modificarse mediante una operación registrada. El alta de existencias iniciales también deberá quedar documentada como una entrada.
+
+Cada movimiento conservará la cantidad anterior, la cantidad del movimiento, la cantidad resultante, el motivo, la fecha y el usuario.
+
+No se utilizarán automáticamente existencias de otra ubicación para completar una salida.
+
+### 3.10 Conservación del historial
+
+El historial conservará los cambios relevantes de ubicación, responsable y estado, así como las instalaciones y retiros de componentes.
+
+Cada registro deberá permitir conocer:
+
+- El bien afectado.
+- El tipo de operación.
+- La información anterior y nueva.
+- La fecha y hora.
+- El usuario que realizó la operación.
+- El motivo, cuando corresponda.
+
+Las operaciones ordinarias no permitirán editar ni eliminar registros históricos. Una corrección deberá conservar evidencia del hecho original y del ajuste realizado.
+
+La información histórica permanecerá disponible cuando un bien sea dado de baja.
+
+Los registros relacionados que tengan historial no deberán eliminarse de una manera que impida identificar lo ocurrido. Cuando corresponda, deberán desactivarse para nuevos usos, conservando sus referencias anteriores.
+
+### 3.11 Guardado conjunto de cambios e historial
+
+La modificación de la situación actual y el registro de su historial deberán guardarse como una sola operación indivisible.
+
+Si falla cualquiera de sus partes, se cancelará toda la operación y se conservará la información anterior.
+
+No deberá existir un cambio aplicado sin historial ni un historial que describa un cambio que no se realizó.
+
+Esta condición también se aplicará a las existencias y a las relaciones de instalación de componentes.
+
+El sistema confirmará el éxito únicamente cuando la operación completa se haya guardado.
+
+### 3.12 Control de modificaciones simultáneas
+
+El sistema evitará que dos usuarios sobrescriban silenciosamente sus cambios sobre un mismo bien o existencia.
+
+Antes de guardar una operación, comprobará que la información utilizada siga vigente. Si otro usuario ya la modificó, rechazará la operación basada en los datos anteriores y solicitará consultar la información actualizada.
+
+El rechazo no deberá dejar cambios parciales.
+
+El mecanismo técnico para garantizar este comportamiento se definirá durante el diseño del backend.
+
+### 3.13 Acceso a información mediante códigos QR
+
+El QR contendrá una referencia estable para localizar el bien. No almacenará directamente datos sensibles ni credenciales.
+
+Cambiar la ubicación, el responsable o el estado no deberá obligar a reemplazar la etiqueta.
+
+Escanear el QR no otorgará permisos adicionales. El sistema determinará qué información puede consultarse.
+
+Como propuesta inicial, la consulta sin iniciar sesión se limitará al identificador, tipo de bien, estado general y fecha de actualización. La habilitación de esa consulta y sus campos deberán ser revisados por el área solicitante.
+
+Los datos del responsable, documentos, información de adquisición, detalles técnicos e historial permanecerán protegidos. En la propuesta actual, marca y modelo también requieren autenticación.
+
+La primera etapa no incluirá el reporte de incidencias mediante QR, porque ese módulo queda fuera del alcance.
+
+### 3.14 Validación y conservación de archivos
+
+El sistema validará el tamaño, la extensión, el tipo y el contenido de los archivos antes de aceptarlos.
+
+Las extensiones permitidas y los tamaños máximos deberán definirse antes de implementar las cargas.
+
+Los archivos tendrán nombres internos seguros y se almacenarán en un lugar que impida su ejecución como código.
+
+Su consulta deberá respetar los permisos del sistema. Conocer su dirección no será suficiente para acceder a documentación restringida.
+
+Si falla el almacenamiento o la asociación, el sistema no confirmará la operación. Se evitarán referencias a archivos inexistentes y se gestionará la limpieza de archivos almacenados sin asociación.
+
+Los respaldos deberán contemplar tanto la base de datos como los archivos relacionados.
+
+## 4. Requisitos no funcionales
+
+Los requisitos no funcionales establecen las condiciones de seguridad, calidad y operación del backend.
+
+### 4.1 Seguridad y control de acceso
+
+El backend deberá identificar al usuario en las operaciones protegidas y comprobar sus permisos antes de consultar o modificar información.
+
+Las restricciones deberán aplicarse directamente en el backend, aunque la solicitud no provenga de la futura interfaz.
+
+Las contraseñas deberán gestionarse mediante los mecanismos seguros del framework. No se almacenarán en texto plano.
+
+Las credenciales y otros secretos se mantendrán fuera del repositorio. La documentación incluirá ejemplos de configuración sin valores reales.
+
+En producción, la comunicación deberá utilizar HTTPS. El mecanismo de autenticación y las condiciones de expiración o revocación del acceso se definirán durante el diseño técnico.
+
+### 4.2 Integridad y consistencia de la información
+
+El sistema deberá validar los datos recibidos y mantener relaciones válidas entre bienes, ubicaciones, responsables, documentos y movimientos.
+
+Las reglas críticas deberán protegerse tanto en la lógica del backend como mediante las restricciones de almacenamiento que correspondan.
+
+Los cambios relacionados se guardarán de manera conjunta y se aplicará control de modificaciones simultáneas.
+
+Las fechas deberán almacenarse y presentarse con un criterio uniforme de zona horaria, definido en el diseño técnico.
+
+### 4.3 Rendimiento de consultas y paginación
+
+Los listados deberán utilizar paginación con un tamaño predeterminado y un límite máximo.
+
+Las consultas principales deberán revisarse para detectar consultas repetidas innecesarias, especialmente al recuperar ubicaciones, responsables, estados y otros datos relacionados.
+
+La evaluación inicial utilizará conjuntos de 10, 100 y 1000 bienes. Las mediciones mantendrán condiciones comparables y registrarán el entorno, el tamaño de página, el número de consultas y los tiempos de respuesta.
+
+En un listado paginado, recuperar las relaciones no deberá provocar una consulta adicional por cada bien mostrado.
+
+Los índices se propondrán a partir de las búsquedas y filtros utilizados, considerando su costo de almacenamiento y escritura.
+
+Los tiempos máximos aceptables deberán acordarse y documentarse antes de la validación de rendimiento.
+
+### 4.4 Almacenamiento, respaldo y recuperación
+
+La información deberá almacenarse de manera organizada y permitir el crecimiento del inventario y sus documentos.
+
+Se definirá un procedimiento de respaldo que contemple la base de datos y los archivos asociados.
+
+El procedimiento deberá indicar la frecuencia, la retención, el lugar de almacenamiento, el responsable y las condiciones de acceso.
+
+Se realizará una prueba de restauración para comprobar que los respaldos permiten recuperar registros y documentos relacionados.
+
+La frecuencia de respaldo y el tiempo aceptable de recuperación quedarán pendientes de acuerdo con el área solicitante.
+
+### 4.5 Manejo de errores
+
+La API deberá devolver respuestas claras y consistentes cuando una operación no pueda completarse.
+
+Se distinguirán, entre otros, los siguientes casos:
+
+- Datos inválidos.
+- Falta de autenticación.
+- Permisos insuficientes.
+- Registro inexistente.
+- Conflicto por una modificación simultánea.
+- Archivo rechazado.
+- Fallo interno.
+
+Los mensajes deberán ayudar a identificar la causa sin exponer contraseñas, rutas internas, consultas de base de datos ni otros detalles sensibles.
+
+Los errores internos deberán registrarse para facilitar su diagnóstico.
+
+### 4.6 Organización y mantenimiento del backend
+
+El proyecto utilizará Django y Django REST Framework, conforme a la tecnología solicitada.
+
+La organización deberá separar responsabilidades y evitar que una misma regla de negocio tenga implementaciones contradictorias.
+
+Las dependencias y sus versiones deberán quedar registradas. Los cambios de la base de datos deberán gestionarse mediante migraciones.
+
+El proyecto incluirá pruebas automatizadas para las reglas principales y procedimientos reproducibles de instalación y ejecución.
+
+### 4.7 Documentación de la API y preparación para React
+
+La API deberá documentar sus operaciones, datos de entrada, respuestas, errores y permisos.
+
+La documentación incluirá ejemplos de autenticación, filtros, ordenamiento, paginación y carga de archivos.
+
+Se definirá una estrategia de versionado para gestionar cambios que puedan afectar a sus consumidores.
+
+El backend deberá poder probarse y utilizarse sin depender de que la interfaz en React esté terminada.
+
+## 5. Criterios de aceptación
+
+Los siguientes criterios describen resultados que deberán comprobarse durante la validación. No representan pruebas ya realizadas.
+
+### 5.1 Registro, consulta y modificación de bienes
+
+Se considerará cumplido cuando:
+
+- Un usuario autorizado pueda registrar un bien con la información requerida para su forma de control.
+- El sistema rechace identificadores internos duplicados.
+- El bien pueda consultarse y modificarse según los permisos del usuario.
+- Una solicitud inválida no deje registros incompletos.
+- El identificador se conserve después de modificar otros datos.
+
+### 5.2 Bienes sin factura y documentación pendiente
+
+Se considerará cumplido cuando:
+
+- Sea posible registrar una laptop sin factura ni detalle de adquisición.
+- El registro quede pendiente de documentación cuando no exista otro respaldo válido.
+- Sea posible registrar un origen distinto de compra sin exigir datos exclusivos de una factura.
+- Un documento válido pueda incorporarse posteriormente al mismo bien.
+- El identificador, QR e historial permanezcan sin cambios por esa incorporación.
+- Una fotografía del equipo no retire por sí sola la condición pendiente.
+
+### 5.3 Ubicaciones, responsables y estados
+
+Se considerará cumplido cuando:
+
+- Un usuario autorizado pueda cambiar la ubicación, el responsable y el estado de un bien.
+- Sea posible consultar los bienes de una ubicación o responsable.
+- Una devolución al almacén permita dejar vacío el responsable actual.
+- El historial conserve al responsable anterior y al usuario que registró la devolución.
+- Un bien devuelto con una falla no quede disponible automáticamente.
+- Las transiciones no permitidas sean rechazadas.
+
+### 5.4 Historial y modificaciones simultáneas
+
+Se considerará cumplido cuando:
+
+- Cada cambio relevante registre la información anterior y nueva, la fecha y el usuario.
+- La consulta del historial respete los permisos.
+- Un fallo provocado durante el guardado del historial cancele también el cambio del bien.
+- Dos modificaciones simultáneas no provoquen la pérdida silenciosa de información.
+- Una operación rechazada no deje cambios parciales.
+- Los movimientos anteriores permanezcan disponibles después de dar de baja un bien.
+
+### 5.5 Adquisiciones y archivos de respaldo
+
+Se considerará cumplido cuando:
+
+- Un documento de origen pueda relacionarse con varios bienes.
+- Los archivos permitidos se almacenen y puedan consultarse por usuarios autorizados.
+- Los archivos inválidos o que superen el tamaño máximo sean rechazados.
+- Cada carga registre quién la realizó y cuándo.
+- Un usuario sin permisos no pueda descargar archivos restringidos.
+- Un fallo de almacenamiento o asociación no se presente como una carga exitosa.
+
+### 5.6 Generación y consulta mediante QR
+
+Se considerará cumplido cuando:
+
+- El QR permita localizar el bien correcto.
+- Cambiar la ubicación, el responsable o el estado no invalide el QR.
+- Sea posible volver a imprimir o generar la etiqueta sin duplicar el bien.
+- Un código desconocido produzca una respuesta clara.
+- La lectura del QR respete las reglas de acceso.
+- El QR no contenga información sensible ni credenciales.
+- Si se aprueba la consulta pública, esta muestre únicamente los campos autorizados.
+
+### 5.7 Control de existencias por cantidad
+
+Se considerará cumplido cuando:
+
+- Una entrada aumente las existencias del artículo en la ubicación correspondiente.
+- Una salida válida las disminuya.
+- Una salida superior a la cantidad disponible sea rechazada.
+- No se permitan cantidades negativas o incompatibles con la unidad de medida.
+- Cada movimiento conserve las cantidades anterior y resultante.
+- Un fallo cancele tanto el cambio de existencias como su movimiento.
+- Dos salidas simultáneas no permitan retirar más unidades de las disponibles.
+
+### 5.8 Instalación y retiro de componentes
+
+Se considerará cumplido cuando:
+
+- Un componente disponible pueda instalarse en un equipo válido.
+- Se impida instalar el mismo componente en dos equipos al mismo tiempo.
+- El retiro finalice la instalación vigente sin eliminarla del historial.
+- El componente pueda instalarse después en otro equipo conservando su identidad.
+- Se rechacen relaciones consigo mismo o relaciones circulares.
+- La ubicación del componente instalado sea coherente con la del equipo.
+
+### 5.9 Permisos y rechazo de operaciones no autorizadas
+
+Se considerará cumplido cuando:
+
+- El administrador pueda realizar las acciones definidas para su rol.
+- El operador pueda ejecutar las operaciones autorizadas del inventario.
+- El usuario de consulta pueda leer la información permitida sin modificarla.
+- La administración de usuarios y permisos quede restringida al rol autorizado.
+- Las restricciones funcionen al realizar solicitudes directamente a la API.
+- Las operaciones rechazadas no alteren la información.
+
+### 5.10 Búsquedas, filtros, paginación y rendimiento
+
+Se considerará cumplido cuando:
+
+- Las búsquedas y los filtros devuelvan registros que cumplan los criterios.
+- Los filtros combinados se apliquen de forma conjunta.
+- Los resultados tengan un orden estable y respeten los límites de paginación.
+- Una búsqueda sin coincidencias devuelva un listado vacío.
+- Los parámetros inválidos produzcan una respuesta clara.
+- Se presenten mediciones con los volúmenes de prueba definidos.
+- Se demuestre que los listados revisados no generan consultas adicionales por cada elemento relacionado.
+- Se cumplan los objetivos de respuesta acordados antes de la validación.
+
+### 5.11 Instalación reproducible, pruebas y documentación
+
+Se considerará cumplido cuando:
+
+- Otra persona pueda instalar y ejecutar el backend siguiendo las instrucciones.
+- Exista un archivo de configuración de ejemplo sin secretos.
+- Las migraciones puedan aplicarse en un ambiente limpio.
+- Las pruebas automatizadas puedan ejecutarse mediante instrucciones documentadas.
+- Existan datos ficticios de demostración.
+- La API incluya ejemplos de solicitudes, respuestas y errores.
+- Se documenten las limitaciones conocidas y las decisiones pendientes.
+
+## 6. Decisiones pendientes y límites del alcance
+
+### 6.1 Decisiones funcionales que requieren revisión
+
+Antes de cerrar la propuesta funcional deberán confirmarse los siguientes puntos:
+
+| Tema | Decisión pendiente |
+|---|---|
+| Clasificación de bienes | Confirmar qué artículos se controlarán individualmente y cuáles por cantidad |
+| Información obligatoria | Validar los datos mínimos para cada tipo de bien |
+| Números de serie | Definir cómo se detectarán y resolverán posibles duplicados |
+| Estados | Aprobar los estados por tipo de bien y las transiciones permitidas |
+| Documentación de origen | Definir qué respaldos se aceptarán y quién podrá validarlos |
+| Consulta pública mediante QR | Confirmar si se habilitará y qué campos mostrará |
+| Componentes | Confirmar las condiciones para permitir instalaciones y retiros |
+| Unidades de medida | Definir cuáles se utilizarán y cuáles admitirán fracciones |
+| Permisos | Confirmar si existen restricciones adicionales por área o ubicación |
+| Correcciones de movimientos | Definir cómo registrar ajustes sin eliminar la evidencia anterior |
+
+Estas decisiones deberán reflejarse de manera consistente en los casos de uso, las reglas y el diseño posterior.
+
+### 6.2 Decisiones técnicas pendientes de justificar
+
+Django y Django REST Framework constituyen la tecnología base solicitada. Las demás decisiones deberán proponerse y justificarse.
+
+Quedan pendientes:
+
+- Gestor de base de datos.
+- Organización de módulos y responsabilidades.
+- Modelo de datos, relaciones y restricciones.
+- Mecanismo de autenticación.
+- Implementación de permisos.
+- Control de modificaciones simultáneas.
+- Almacenamiento de documentos y fotografías.
+- Extensiones y tamaños máximos de archivo.
+- Generación y contenido exacto de los QR.
+- Herramientas de documentación y pruebas.
+- Versionado de la API.
+- Índices y estrategia de consulta.
+- Tamaños de página y objetivos de rendimiento.
+- Respaldo, restauración y configuración de producción.
+
+Cada decisión deberá explicar qué necesidad resuelve, qué alternativas se consideraron y qué limitaciones tiene.
+
+### 6.3 Funciones fuera de alcance y fases futuras
+
+La primera etapa no incluirá:
+
+- Interfaz final en React.
+- Sistema completo de tickets e incidencias.
+- Gestión completa de reparaciones y mantenimientos preventivos.
+- Alertas automáticas de mantenimiento o garantías.
+- Gestión completa de préstamos temporales, reservas y firmas de entrega.
+- Procedimiento integral de disposición final de bienes.
+- Integración con un ERP u otros sistemas.
+- Migración masiva de información histórica, salvo una prueba controlada acordada.
+- Paneles e indicadores administrativos avanzados.
+
+Registrar que un bien llegó mediante un préstamo no implica implementar un módulo de gestión de préstamos.
+
+Representar un estado de revisión no implica construir un módulo de mantenimiento.
+
+Registrar instalaciones y retiros de componentes se limita al control del inventario y su trazabilidad.
+
+La propuesta técnica deberá considerar el crecimiento futuro sin incorporar anticipadamente todos estos módulos.
+
+### 6.4 Condiciones para pasar al diseño técnico
+
+Se podrá avanzar al diseño técnico cuando:
+
+1. El alcance inicial y sus exclusiones estén revisados.
+2. Los actores y permisos estén definidos.
+3. Los casos de uso describan las operaciones principales y sus errores.
+4. Las reglas no presenten contradicciones sobre documentación, responsables, estados y formas de control.
+5. Los criterios de aceptación permitan comprobar los resultados esperados.
+6. Las decisiones funcionales necesarias para modelar la información estén resueltas o claramente delimitadas.
+
+El diseño técnico deberá explicar cómo se cumplirán estas reglas mediante la organización del backend, la base de datos, los permisos, los archivos y las pruebas.
+
+La construcción definitiva deberá comenzar después de la revisión de la propuesta funcional y técnica, conforme a la guía del proyecto.
