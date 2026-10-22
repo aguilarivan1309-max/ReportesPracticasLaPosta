@@ -1,4 +1,5 @@
-﻿services:
+﻿name: reportespracticaslaposta
+services:
   db:
     image: postgres:17-alpine
     restart: unless-stopped
