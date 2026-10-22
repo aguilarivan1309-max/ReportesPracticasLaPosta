@@ -1,0 +1,39 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Django
+*.log
+db.sqlite3
+media/
+staticfiles/
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Herramientas y editores
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Pruebas y cobertura
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Docker: archivos locales opcionales
+docker-compose.override.yaml
+compose.override.yaml
+
+# Documentos locales de prácticas
+#/facturas/
