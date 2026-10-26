@@ -45,3 +45,47 @@ class Factura(models.Model):
 
     def __str__(self):
         return self.folio
+
+
+class TipoBien(models.Model):
+    nombre = models.CharField(max_length=100, verbose_name="Nombre")
+    descripcion = models.TextField(blank=True, verbose_name="Descripción")
+    modo_control = models.CharField(
+        max_length=30, default="individual", verbose_name="Modo de control"
+    )
+    requiere_qr = models.BooleanField(default=True, verbose_name="Requiere código QR")
+    permite_instalacion = models.BooleanField(default=False, verbose_name="Permite instalación")
+    activo = models.BooleanField(default=True, verbose_name="Activo")
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "Tipo de bien"
+        verbose_name_plural = "Tipos de bien"
+
+    def __str__(self):
+        return self.nombre
+
+
+class Articulo(models.Model):
+    tipo_bien = models.ForeignKey(
+        TipoBien,
+        on_delete=models.PROTECT,
+        related_name="articulos",
+        verbose_name="Tipo de bien",
+    )
+    nombre = models.CharField(max_length=200, verbose_name="Nombre")
+    descripcion = models.TextField(blank=True, verbose_name="Descripción")
+    marca = models.CharField(max_length=100, blank=True, verbose_name="Marca")
+    modelo = models.CharField(max_length=100, blank=True, verbose_name="Modelo")
+    unidad_medida = models.CharField(
+        max_length=30, default="pieza", verbose_name="Unidad de medida"
+    )
+    activo = models.BooleanField(default=True, verbose_name="Activo")
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "Artículo"
+        verbose_name_plural = "Artículos"
+
+    def __str__(self):
+        return self.nombre
