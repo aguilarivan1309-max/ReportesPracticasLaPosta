@@ -48,14 +48,32 @@ class Factura(models.Model):
 
 
 class TipoBien(models.Model):
-    nombre = models.CharField(max_length=100, verbose_name="Nombre")
-    descripcion = models.TextField(blank=True, verbose_name="Descripción")
-    modo_control = models.CharField(
-        max_length=30, default="individual", verbose_name="Modo de control"
+    nombre = models.CharField(
+        max_length=100, 
+        unique=True,
+        verbose_name="Nombre",
     )
-    requiere_qr = models.BooleanField(default=True, verbose_name="Requiere código QR")
-    permite_instalacion = models.BooleanField(default=False, verbose_name="Permite instalación")
-    activo = models.BooleanField(default=True, verbose_name="Activo")
+    descripcion = models.TextField(
+        blank=True, 
+        verbose_name="Descripción"
+    )
+    modo_control = models.CharField(
+        max_length=30, 
+        default="individual", 
+        verbose_name="Modo de control",
+    )
+    requiere_qr = models.BooleanField(
+        default=True, 
+        verbose_name="Requiere código QR",
+    )
+    permite_instalacion = models.BooleanField(
+        default=False,
+        verbose_name="Permite instalación",
+    )
+    activo = models.BooleanField(
+        default=True, 
+        verbose_name="Activo",
+    )
 
     class Meta:
         ordering = ["nombre"]
@@ -73,14 +91,30 @@ class Articulo(models.Model):
         related_name="articulos",
         verbose_name="Tipo de bien",
     )
-    nombre = models.CharField(max_length=200, verbose_name="Nombre")
-    descripcion = models.TextField(blank=True, verbose_name="Descripción")
-    marca = models.CharField(max_length=100, blank=True, verbose_name="Marca")
-    modelo = models.CharField(max_length=100, blank=True, verbose_name="Modelo")
-    unidad_medida = models.CharField(
-        max_length=30, default="pieza", verbose_name="Unidad de medida"
+    nombre = models.CharField(
+        max_length=200,
+        verbose_name="Nombre",
     )
-    activo = models.BooleanField(default=True, verbose_name="Activo")
+    descripcion = models.TextField(
+        blank=True,
+        verbose_name="Descripción",
+    )
+    marca = models.CharField(
+        max_length=100,
+        blank=True, verbose_name="Marca",
+    )
+    modelo = models.CharField(
+        max_length=100, blank=True, 
+        verbose_name="Modelo",
+    )
+    unidad_medida = models.CharField(
+        max_length=30, default="pieza",
+        verbose_name="Unidad de medida",
+    )
+    activo = models.BooleanField(
+        default=True, 
+        verbose_name="Activo",
+    )
 
     class Meta:
         ordering = ["nombre"]
@@ -89,3 +123,145 @@ class Articulo(models.Model):
 
     def __str__(self):
         return self.nombre
+
+
+class EstadoActivo(models.Model):
+    nombre = models.CharField(
+        max_length=50,
+        unique = True,
+        verbose_name="Nombre del estado",
+    )
+    descripcion = models.TextField(
+        blank=True,
+        verbose_name="Descripcion",
+    )
+    activo = models.BooleanField(
+        default=True,
+        verbose_name="Activo",
+    )
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "Estado del activo"
+        verbose_name_plural = "Estados de los activos"  
+    def __str__(self):
+        return self.nombre
+
+class Ubicacion(models.Model):
+    nombre = models.CharField(
+        max_length=150,
+        verbose_name="Nombre",
+    )
+    descripcion = models.TextField(
+        blank=True,
+        verbose_name="Descripcion",
+    )
+    ubicacion_padre = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="sububicaciones",
+        verbose_name="Ubicacion superior",
+    )
+    activo = models.BooleanField(
+        default=True,
+        verbose_name="Activo",
+    )
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "Ubicacion"
+        verbose_name_plural = "Ubicaciones"
+    def __str__(self):
+        return self.nombre 
+
+
+class Responsable(models.Model):
+    nombre = models.CharField(
+        max_length=100,
+        verbose_name="Nombre",
+    )
+    apellidos = models.CharField(
+        max_length=150,
+        verbose_name="Apellidos",
+    )
+    numero_empleado = models.CharField(
+        max_length=30,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name="Número de empleado",
+    )
+    correo = models.EmailField(
+        blank=True,
+        verbose_name="Correo electrónico",
+    )
+    activo = models.BooleanField(
+        default=True,
+        verbose_name="Activo",
+    )
+
+    class Meta:
+        ordering = ["apellidos", "nombre"]
+        verbose_name = "Responsable"
+        verbose_name_plural = "Responsables"
+
+    def __str__(self):
+        return f"{self.nombre} {self.apellidos}"
+
+
+class Activo(models.Model):
+    numero_inventario = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name="Número de inventario",
+    )
+    articulo = models.ForeignKey(
+        Articulo,
+        on_delete=models.PROTECT,
+        related_name="activos",
+        verbose_name="Artículo",
+    )
+    estado = models.ForeignKey(
+        EstadoActivo,
+        on_delete=models.PROTECT,
+        related_name="activos",
+        verbose_name="Estado",
+    )
+    ubicacion = models.ForeignKey(
+        Ubicacion,
+        on_delete=models.PROTECT,
+        related_name="activos",
+        null=True,
+        blank=True,
+        verbose_name="Ubicación",
+    )
+    responsable = models.ForeignKey(
+        Responsable,
+        on_delete=models.PROTECT,
+        related_name="activos",
+        null=True,
+        blank=True,
+        verbose_name="Responsable actual",
+    )
+    numero_serie = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Número de serie",
+    )
+    fecha_adquisicion = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Fecha de adquisición",
+    )
+    observaciones = models.TextField(
+        blank=True,
+        verbose_name="Observaciones",
+    )
+
+    class Meta:
+        ordering = ["numero_inventario"]
+        verbose_name = "Activo"
+        verbose_name_plural = "Activos"
+
+    def __str__(self):
+        return f"{self.numero_inventario} - {self.articulo.nombre}"
