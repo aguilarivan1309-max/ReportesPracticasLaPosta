@@ -265,3 +265,35 @@ class Activo(models.Model):
 
     def __str__(self):
         return f"{self.numero_inventario} - {self.articulo.nombre}"
+
+class Proveedor(models.Model):
+    nombre = models.CharField(max_length=200, verbose_name="Nombre o razón social")
+    rfc = models.CharField(max_length=13, blank=True, verbose_name="RFC")
+    contacto = models.CharField(max_length=150, blank=True, verbose_name="Persona de contacto")
+    correo = models.EmailField(blank=True, verbose_name="Correo electrónico")
+    telefono = models.CharField(max_length=30, blank=True, verbose_name="Teléfono")
+    activo = models.BooleanField(default=True, verbose_name="Activo")
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "Proveedor"
+        verbose_name_plural = "Proveedores"
+
+    def __str__(self):
+        return self.nombre
+
+
+class Componente(models.Model):
+    nombre = models.CharField(max_length=150, verbose_name="Nombre")
+    numero_serie = models.CharField(max_length=100, blank=True, verbose_name="Número de serie")
+    marca = models.CharField(max_length=100, blank=True, verbose_name="Marca")
+    modelo = models.CharField(max_length=100, blank=True, verbose_name="Modelo")
+    activo = models.BooleanField(default=True, verbose_name="Activo")
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "Componente"
+        verbose_name_plural = "Componentes"
+
+    def __str__(self):
+        return self.nombre
