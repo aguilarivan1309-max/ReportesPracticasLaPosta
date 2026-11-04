@@ -4,6 +4,23 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+def agregar_proveedor_si_falta(apps, schema_editor):
+    Factura = apps.get_model("inventario", "Factura")
+    Proveedor = apps.get_model("inventario", "Proveedor")
+    with schema_editor.connection.cursor() as cursor:
+        columnas = schema_editor.connection.introspection.get_table_description(
+            cursor, Factura._meta.db_table
+        )
+    if "proveedor_id" not in {columna.name for columna in columnas}:
+        campo = models.ForeignKey(
+            Proveedor, on_delete=django.db.models.deletion.PROTECT,
+            null=True, blank=True, related_name="facturas",
+        )
+        campo.set_attributes_from_name("proveedor")
+        campo.model = Factura
+        schema_editor.add_field(Factura, campo)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,9 +28,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.SeparateDatabaseAndState(
+            database_operations=[migrations.RunPython(agregar_proveedor_si_falta)],
+            state_operations=[
         migrations.AddField(
             model_name='factura',
             name='proveedor',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='facturas', to='inventario.proveedor', verbose_name='Proveedor'),
+        ),
+            ],
         ),
     ]

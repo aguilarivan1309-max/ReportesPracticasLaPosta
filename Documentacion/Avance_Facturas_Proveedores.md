@@ -30,3 +30,11 @@ La página de Swagger respondió correctamente y su esquema se validó sin error
 Se creó y aplicó la migración 0008_factura_proveedor. Fue necesaria porque faltaba la relación, aunque la guía suponía que ya existía. No quedaron cambios de modelos pendientes de migración.
 
 Los cambios quedaron preparados localmente para revisión. No se realizó commit ni push como parte de esta actividad.
+
+## Integración con los cambios del equipo
+
+Al descargar la actualización del compañero hubo coincidencias en los mismos archivos. Se conservaron la carga de XML y PDF, la lectura de los datos de la factura y la protección al eliminar proveedores.
+
+Las dos versiones habían agregado la relación con proveedor. Se ajustaron las migraciones para conservar la columna si ya existe y se agregó 0011_merge_facturas_proveedores para unir ambas versiones. La migración que cambia archivo por archivo_pdf ahora conserva la referencia del archivo anterior. Estas migraciones de integración no tienen reversión automática de la relación compartida.
+
+Antes de aplicar los cambios se guardó un respaldo local de PostgreSQL en /tmp/posta_antes_integracion_20261104.dump dentro del contenedor db. La integración se aplicó sin errores; las nueve pruebas y la validación de Swagger volvieron a pasar. La prueba de alta de factura ahora utiliza XML, como requiere la versión del equipo.

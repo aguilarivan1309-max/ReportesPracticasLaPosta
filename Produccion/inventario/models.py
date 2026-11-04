@@ -1,16 +1,20 @@
-
+from django.core.exceptions import ValidationError
+from .inventario.validadores import validar_pdf, validar_xml
 from django.db import models
 
 
 class Factura(models.Model):
-    proveedor = models.ForeignKey(
-        "Proveedor", on_delete=models.PROTECT, related_name="facturas",
-        null=True, blank=True, verbose_name="Proveedor",
-    )
     folio = models.CharField(
         max_length=100,
         unique=True,
         verbose_name="Folio de factura",
+    )
+    uuid_fiscal = models.CharField(
+        max_length=36,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name="UUID fiscal del CFDI",
     )
     fecha_emision = models.DateField(
         verbose_name="Fecha de emisión",
@@ -24,6 +28,14 @@ class Factura(models.Model):
         blank=True,
         verbose_name="RFC del proveedor",
     )
+    proveedor = models.ForeignKey(
+        "Proveedor",
+        on_delete=models.PROTECT,
+        related_name="facturas",
+        null=True,
+        blank=True,
+        verbose_name="Proveedor relacionado",
+    )
     importe_total = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -31,11 +43,19 @@ class Factura(models.Model):
         blank=True,
         verbose_name="Importe total",
     )
-    archivo = models.FileField(
-        upload_to="facturas/",
+    archivo_pdf = models.FileField(
+        upload_to="facturas/pdf/",
+        validators=[validar_pdf],
         null=True,
         blank=True,
-        verbose_name="Documento de factura",
+        verbose_name="Factura PDF",
+    )
+    archivo_xml = models.FileField(
+        upload_to="facturas/xml/",
+        validators=[validar_xml],
+        null=True,
+        blank=True,
+        verbose_name="Factura en XML",
     )
     fecha_registro = models.DateTimeField(
         auto_now_add=True,
@@ -53,21 +73,21 @@ class Factura(models.Model):
 
 class TipoBien(models.Model):
     nombre = models.CharField(
-        max_length=100, 
+        max_length=100,
         unique=True,
         verbose_name="Nombre",
     )
     descripcion = models.TextField(
-        blank=True, 
+        blank=True,
         verbose_name="Descripción"
     )
     modo_control = models.CharField(
-        max_length=30, 
-        default="individual", 
+        max_length=30,
+        default="individual",
         verbose_name="Modo de control",
     )
     requiere_qr = models.BooleanField(
-        default=True, 
+        default=True,
         verbose_name="Requiere código QR",
     )
     permite_instalacion = models.BooleanField(
@@ -75,7 +95,7 @@ class TipoBien(models.Model):
         verbose_name="Permite instalación",
     )
     activo = models.BooleanField(
-        default=True, 
+        default=True,
         verbose_name="Activo",
     )
 
@@ -108,7 +128,7 @@ class Articulo(models.Model):
         blank=True, verbose_name="Marca",
     )
     modelo = models.CharField(
-        max_length=100, blank=True, 
+        max_length=100, blank=True,
         verbose_name="Modelo",
     )
     unidad_medida = models.CharField(
@@ -116,7 +136,7 @@ class Articulo(models.Model):
         verbose_name="Unidad de medida",
     )
     activo = models.BooleanField(
-        default=True, 
+        default=True,
         verbose_name="Activo",
     )
 
@@ -146,7 +166,7 @@ class EstadoActivo(models.Model):
     class Meta:
         ordering = ["nombre"]
         verbose_name = "Estado del activo"
-        verbose_name_plural = "Estados de los activos"  
+        verbose_name_plural = "Estados de los activos"
     def __str__(self):
         return self.nombre
 
@@ -176,7 +196,7 @@ class Ubicacion(models.Model):
         verbose_name = "Ubicacion"
         verbose_name_plural = "Ubicaciones"
     def __str__(self):
-        return self.nombre 
+        return self.nombre
 
 
 class Responsable(models.Model):
@@ -271,12 +291,33 @@ class Activo(models.Model):
         return f"{self.numero_inventario} - {self.articulo.nombre}"
 
 class Proveedor(models.Model):
-    nombre = models.CharField(max_length=200, verbose_name="Nombre o razón social")
-    rfc = models.CharField(max_length=13, blank=True, verbose_name="RFC")
-    contacto = models.CharField(max_length=150, blank=True, verbose_name="Persona de contacto")
-    correo = models.EmailField(blank=True, verbose_name="Correo electrónico")
-    telefono = models.CharField(max_length=30, blank=True, verbose_name="Teléfono")
-    activo = models.BooleanField(default=True, verbose_name="Activo")
+    nombre = models.CharField(
+        max_length=200,
+        verbose_name="Nombre o razón social",
+    )
+    rfc = models.CharField(
+        max_length=13,
+        blank=True,
+        verbose_name="RFC",
+    )
+    contacto = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name="Persona de contacto",
+        )
+    correo = models.EmailField(
+        blank=True,
+        verbose_name="Correo electrónico",
+        )
+    telefono = models.CharField(
+        max_length=30,
+        blank=True,
+        verbose_name="Teléfono",
+    )
+    activo = models.BooleanField(
+        default=True,
+        verbose_name="Activo",
+    )
 
     class Meta:
         ordering = ["nombre"]
@@ -288,11 +329,29 @@ class Proveedor(models.Model):
 
 
 class Componente(models.Model):
-    nombre = models.CharField(max_length=150, verbose_name="Nombre")
-    numero_serie = models.CharField(max_length=100, blank=True, verbose_name="Número de serie")
-    marca = models.CharField(max_length=100, blank=True, verbose_name="Marca")
-    modelo = models.CharField(max_length=100, blank=True, verbose_name="Modelo")
-    activo = models.BooleanField(default=True, verbose_name="Activo")
+    nombre = models.CharField(
+        max_length=150,
+        verbose_name="Nombre",
+    )
+    numero_serie = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Número de serie",
+    )
+    marca = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Marca",
+    )
+    modelo = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Modelo",
+    )
+    activo = models.BooleanField(
+        default=True,
+        verbose_name="Activo",
+    )
 
     class Meta:
         ordering = ["nombre"]
@@ -301,3 +360,117 @@ class Componente(models.Model):
 
     def __str__(self):
         return self.nombre
+class ComponenteInstalado(models.Model):
+    activo = models.ForeignKey(
+        Activo,
+        on_delete=models.PROTECT,
+        related_name="componentes_instalados",
+        verbose_name="Activo",
+    )
+    componente = models.ForeignKey(
+        Componente,
+        on_delete=models.PROTECT,
+        related_name="instalaciones",
+        verbose_name="Componente",
+    )
+    fecha_instalacion = models.DateField(
+        verbose_name="Fecha de instalacion",
+    )
+    fecha_retiro = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Fecha de retiro",
+    )
+    observaciones = models.TextField(
+        blank=True,
+        verbose_name="Observaciones",
+    )
+    class Meta:
+        ordering = ["-fecha_instalacion"]
+        verbose_name = "Componente instalado"
+        verbose_name_plural = "Componentes instalados"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["componente"],
+                condition=models.Q(fecha_retiro__isnull=True),
+                name="componente_una_instalacion_activa",
+            )
+        ]
+    def __str__(self):
+        return f"{self.componente} - {self.activo}"
+
+class Movimiento(models.Model):
+    class TipoMovimiento(models.TextChoices):
+        ALTA = "alta", "Alta"
+        ASIGNACION = "asignacion", "Asignación"
+        TRASLADO = "traslado", "Traslado"
+        DEVOLUCION = "devolucion", "Devolución"
+        MANTENIMIENTO = "mantenimiento", "Mantenimiento"
+        BAJA = "baja", "Baja"
+
+    activo = models.ForeignKey(
+        Activo,
+        on_delete=models.PROTECT,
+        related_name="movimientos",
+        verbose_name="Activo",
+    )
+
+    tipo = models.CharField(
+        max_length=20,
+        choices=TipoMovimiento.choices,
+        verbose_name="Tipo de movimiento",
+    )
+
+    fecha = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de registro",
+    )
+
+    responsable_origen = models.ForeignKey(
+        Responsable,
+        on_delete=models.PROTECT,
+        related_name="movimientos_origen",
+        null=True,
+        blank=True,
+        verbose_name="Responsable anterior",
+    )
+
+    responsable_destino = models.ForeignKey(
+        Responsable,
+        on_delete=models.PROTECT,
+        related_name="movimientos_destino",
+        null=True,
+        blank=True,
+        verbose_name="Responsable nuevo",
+    )
+
+    ubicacion_origen = models.ForeignKey(
+        Ubicacion,
+        on_delete=models.PROTECT,
+        related_name="movimientos_origen",
+        null=True,
+        blank=True,
+        verbose_name="Ubicación anterior",
+    )
+
+    ubicacion_destino = models.ForeignKey(
+        Ubicacion,
+        on_delete=models.PROTECT,
+        related_name="movimientos_destino",
+        null=True,
+        blank=True,
+        verbose_name="Ubicación nueva",
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+        verbose_name="Observaciones",
+    )
+
+    class Meta:
+        ordering = ["-fecha"]
+        verbose_name = "Movimiento"
+        verbose_name_plural = "Movimientos"
+
+    def __str__(self):
+        return f"{self.activo.numero_inventario} - {self.get_tipo_display()}"

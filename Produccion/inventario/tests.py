@@ -1,7 +1,11 @@
+import tempfile
+from django.test import override_settings
+from django.urls import reverse
 
 from datetime import date
+from decimal import Decimal
 
-from django.urls import reverse
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -9,15 +13,50 @@ from .models import Factura, Proveedor
 
 
 class FacturaAPITests(APITestCase):
+
     def setUp(self):
+        media = tempfile.TemporaryDirectory()
+        self.addCleanup(media.cleanup)
+        settings = override_settings(MEDIA_ROOT=media.name)
+        settings.enable()
+        self.addCleanup(settings.disable)
         self.factura = Factura.objects.create(
             folio="TEST-FACTURA-001",
             fecha_emision=date(2026, 10, 21),
             proveedor_nombre="Proveedor de prueba",
             proveedor_rfc="XAXX010101000",
-            importe_total="1500.00",
+            importe_total=Decimal("1500.00"),
         )
+
         self.url = "/api/facturas/"
+
+    def crear_xml_prueba(self):
+        contenido_xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante
+    xmlns:cfdi="http://www.sat.gob.mx/cfd/4"
+    xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital"
+    Version="4.0"
+    Folio="TEST-FACTURA-002"
+    Fecha="2026-10-21T12:00:00"
+    Total="2500.00">
+    <cfdi:Emisor
+        Rfc="AAA010101AAA"
+        Nombre="Otro proveedor"/>
+    <cfdi:Receptor
+        Rfc="XAXX010101000"
+        Nombre="Cliente de prueba"/>
+    <cfdi:Complemento>
+        <tfd:TimbreFiscalDigital
+            UUID="12345678-1234-1234-1234-123456789012"/>
+    </cfdi:Complemento>
+</cfdi:Comprobante>
+"""
+
+        return SimpleUploadedFile(
+            "factura_prueba.xml",
+            contenido_xml,
+            content_type="application/xml",
+        )
 
     def test_listar_facturas(self):
         response = self.client.get(self.url)
@@ -27,21 +66,26 @@ class FacturaAPITests(APITestCase):
 
     def test_crear_factura(self):
         datos = {
-            "folio": "TEST-FACTURA-002",
-            "fecha_emision": "2026-10-21",
-            "proveedor_nombre": "Otro proveedor",
-            "proveedor_rfc": "XAXX010101000",
-            "importe_total": "2500.00",
+            "archivo_xml": self.crear_xml_prueba(),
         }
 
-        response = self.client.post(self.url, datos, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(
-            Factura.objects.filter(folio="TEST-FACTURA-002").exists()
+        response = self.client.post(
+            self.url,
+            datos,
+            format="multipart",
         )
 
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            response.data,
+        )
 
+        self.assertTrue(
+            Factura.objects.filter(
+                folio="TEST-FACTURA-002"
+            ).exists()
+        )
 class ProveedorAPITests(APITestCase):
     def setUp(self):
         self.proveedor = Proveedor.objects.create(nombre="Proveedor de prueba", rfc="CCC010101CCC")
