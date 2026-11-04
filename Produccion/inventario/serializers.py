@@ -3,7 +3,7 @@ from django.db import IntegrityError, transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from .models import Factura
+from .models import Factura, Proveedor
 from .inventario.validadores import validar_pdf, validar_xml
 from .lectura_xml import extraer_datos_factura
 
@@ -90,3 +90,17 @@ class FacturaSerializer(serializers.ModelSerializer):
                     "Comprueba que el folio y el UUID no estén duplicados."
                 )
             })
+class ProveedorSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Proveedor
+        fields = [
+            "id",
+            "nombre",
+            "rfc",
+            "contacto",
+            "correo",
+            "telefono",
+            "activo",
+        ]
+        read_only_fields = ["id"]

@@ -28,6 +28,14 @@ class Factura(models.Model):
         blank=True,
         verbose_name="RFC del proveedor",
     )
+    proveedor = models.ForeignKey(
+        "Proveedor",
+        on_delete=models.PROTECT,
+        related_name="facturas",
+        null=True,
+        blank=True,
+        verbose_name="Proveedor relacionado",
+    )
     importe_total = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -352,3 +360,117 @@ class Componente(models.Model):
 
     def __str__(self):
         return self.nombre
+class ComponenteInstalado(models.Model):
+    activo = models.ForeignKey(
+        Activo,
+        on_delete=models.PROTECT,
+        related_name="componentes_instalados",
+        verbose_name="Activo",
+    )
+    componente = models.ForeignKey(
+        Componente,
+        on_delete=models.PROTECT,
+        related_name="instalaciones",
+        verbose_name="Componente",
+    )
+    fecha_instalacion = models.DateField(
+        verbose_name="Fecha de instalacion",
+    )
+    fecha_retiro = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Fecha de retiro",
+    )
+    observaciones = models.TextField(
+        blank=True,
+        verbose_name="Observaciones",
+    )
+    class Meta:
+        ordering = ["-fecha_instalacion"]
+        verbose_name = "Componente instalado"
+        verbose_name_plural = "Componentes instalados"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["componente"],
+                condition=models.Q(fecha_retiro__isnull=True),
+                name="componente_una_instalacion_activa",
+            )
+        ]
+    def __str__(self):
+        return f"{self.componente} - {self.activo}"
+
+class Movimiento(models.Model):
+    class TipoMovimiento(models.TextChoices):
+        ALTA = "alta", "Alta"
+        ASIGNACION = "asignacion", "Asignación"
+        TRASLADO = "traslado", "Traslado"
+        DEVOLUCION = "devolucion", "Devolución"
+        MANTENIMIENTO = "mantenimiento", "Mantenimiento"
+        BAJA = "baja", "Baja"
+
+    activo = models.ForeignKey(
+        Activo,
+        on_delete=models.PROTECT,
+        related_name="movimientos",
+        verbose_name="Activo",
+    )
+
+    tipo = models.CharField(
+        max_length=20,
+        choices=TipoMovimiento.choices,
+        verbose_name="Tipo de movimiento",
+    )
+
+    fecha = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de registro",
+    )
+
+    responsable_origen = models.ForeignKey(
+        Responsable,
+        on_delete=models.PROTECT,
+        related_name="movimientos_origen",
+        null=True,
+        blank=True,
+        verbose_name="Responsable anterior",
+    )
+
+    responsable_destino = models.ForeignKey(
+        Responsable,
+        on_delete=models.PROTECT,
+        related_name="movimientos_destino",
+        null=True,
+        blank=True,
+        verbose_name="Responsable nuevo",
+    )
+
+    ubicacion_origen = models.ForeignKey(
+        Ubicacion,
+        on_delete=models.PROTECT,
+        related_name="movimientos_origen",
+        null=True,
+        blank=True,
+        verbose_name="Ubicación anterior",
+    )
+
+    ubicacion_destino = models.ForeignKey(
+        Ubicacion,
+        on_delete=models.PROTECT,
+        related_name="movimientos_destino",
+        null=True,
+        blank=True,
+        verbose_name="Ubicación nueva",
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+        verbose_name="Observaciones",
+    )
+
+    class Meta:
+        ordering = ["-fecha"]
+        verbose_name = "Movimiento"
+        verbose_name_plural = "Movimientos"
+
+    def __str__(self):
+        return f"{self.activo.numero_inventario} - {self.get_tipo_display()}"
