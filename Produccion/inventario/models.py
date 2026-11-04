@@ -3,6 +3,10 @@ from django.db import models
 
 
 class Factura(models.Model):
+    proveedor = models.ForeignKey(
+        "Proveedor", on_delete=models.PROTECT, related_name="facturas",
+        null=True, blank=True, verbose_name="Proveedor",
+    )
     folio = models.CharField(
         max_length=100,
         unique=True,
