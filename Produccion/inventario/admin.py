@@ -1,6 +1,6 @@
 
 from django.contrib import admin
-from .models import Articulo, Factura, TipoBien, EstadoActivo, Ubicacion, Activo, Responsable, Proveedor, Componente, ComponenteInstalado, Movimiento
+from .models import EstadoComponente, Articulo, Factura, TipoBien, EstadoActivo, Ubicacion, Activo, Responsable, Proveedor, Componente, ComponenteInstalado, Movimiento
 
 
 @admin.register(Factura)
@@ -115,9 +115,9 @@ class ProveedorAdmin(admin.ModelAdmin):
 
 @admin.register(Componente)
 class ComponenteAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "numero_serie", "marca", "modelo", "activo")
+    list_display = ("nombre", "numero_serie", "marca", "modelo", "estado", "activo")
     search_fields = ("nombre", "numero_serie", "marca", "modelo")
-    list_filter = ("marca", "activo")
+    list_filter = ("estado", "marca", "activo")
 
 
 @admin.register(ComponenteInstalado)
@@ -160,3 +160,10 @@ class MovimientoAdmin(admin.ModelAdmin):
     list_filter = ("tipo", "fecha")
 
     readonly_fields = ("fecha",)
+
+@admin.register(EstadoComponente)
+class EstadoComponenteAdmin(admin.ModelAdmin):
+    list_display = ("nombre", "descripcion", "activo")
+    search_fields = ("nombre", "descripcion")
+    list_filter = ("activo",)
+    ordering = ("nombre",)

@@ -135,3 +135,23 @@ class ProveedorAPITests(APITestCase):
         url = reverse("proveedor-detail", args=[self.proveedor.pk + 999999])
         self.assertEqual(self.client.get(url).status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(self.client.delete(url).status_code, status.HTTP_404_NOT_FOUND)
+
+
+class EstadoComponenteTests(APITestCase):
+    def test_no_eliminar_estado_con_componentes(self):
+        from django.db.models.deletion import ProtectedError
+        from .models import Componente, EstadoComponente
+        estado = EstadoComponente.objects.create(nombre="Disponible")
+        componente = Componente.objects.create(nombre="Memoria de prueba", estado=estado)
+        with self.assertRaises(ProtectedError):
+            estado.delete()
+        componente.refresh_from_db()
+        self.assertEqual(componente.estado_id, estado.pk)
+
+    def test_estado_obligatorio_en_formulario(self):
+        from django.forms import modelform_factory
+        from .models import Componente
+        formulario = modelform_factory(Componente, fields=["nombre", "estado"])
+        datos = formulario(data={"nombre": "Memoria de prueba"})
+        self.assertFalse(datos.is_valid())
+        self.assertIn("estado", datos.errors)

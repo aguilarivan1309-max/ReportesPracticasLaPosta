@@ -328,7 +328,27 @@ class Proveedor(models.Model):
         return self.nombre
 
 
+class EstadoComponente(models.Model):
+    nombre = models.CharField(
+        max_length=50, unique=True, verbose_name="Nombre del estado",
+    )
+    descripcion = models.TextField(blank=True, verbose_name="Descripción")
+    activo = models.BooleanField(default=True, verbose_name="Activo")
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "Estado del componente"
+        verbose_name_plural = "Estados de los componentes"
+
+    def __str__(self):
+        return self.nombre
+
+
 class Componente(models.Model):
+    estado = models.ForeignKey(
+        EstadoComponente, on_delete=models.PROTECT,
+        related_name="componentes", verbose_name="Estado",
+    )
     nombre = models.CharField(
         max_length=150,
         verbose_name="Nombre",
