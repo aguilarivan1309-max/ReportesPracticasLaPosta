@@ -78,8 +78,9 @@ def extraer_datos_factura(archivo):
         )
 
     if not proveedor_rfc:
-        errores["proveedor_rfc"] = "El XML no contiene RFC del emisor."
-
+        errores["proveedor_rfc"] =(
+         "El XML no contiene RFC del emisor."
+        )
     if not total_texto:
         errores["importe_total"] = "El XML no contiene Total."
 
@@ -116,3 +117,73 @@ def extraer_datos_factura(archivo):
             else None
         ),
     }
+
+def extraer_conceptos_factura(archivo):
+    """Extrae los conceptos de compra contenidos en un CFDI 4.0."""
+    try:
+        archivo.seek(0)
+        contenid = archivo.read()
+        archivo.seek(0)
+        raiz = ET.fromstring(contenido)
+    except (ET.ParseError, OSError, ValueError):
+        raise ValidationError({
+            "archivo_xml": "No fue posible leer los conceptos del XML"
+        })
+    elemento_conceptos = buscar_elemento(raiz, "Conceptos")
+
+    if elemento_conceptos is None:
+        raise ValidationError({
+            "arhivo_xml":"El XML no contiene el apartado Conceptos"
+        })
+
+    conceptos = []
+
+    for indice, elemento, in enumerate(elemento_conceptos, start=1):
+        if nombre_local(elemento.tag) != "Concepto":
+            continue
+        atributos = elemento.attrib
+
+        descripcion = atributos.get("Descripcion", "").strip()
+        cantidad_texto = atributos.get("Cantidad", "").strip()
+        valor_texto = atributos.get("ValorUnitario", "").strip()
+        importe_texto = atributos.get("Importe", "").strip()
+
+        if not descripcion:
+            raise ValidationError({
+                "archivo_xml": f"El concepto {indice} no tiene descripcion"
+            })
+        try:
+            cantidad = Decimal(cantidad_texto)
+            valor_unitario = Decimal(valor_texto)
+            importe = Decimal(importe_texto)
+
+            if (
+                not cantidad.is_finite()
+                or not valor_unitario.is_finite()
+                or not importe.is_finite()
+                or cantidad <= 0 
+                or valor_unitario < 0 
+                or importe < 0
+            ):
+                raise InvalidOperation
+        except (InvalidOperation, ValueError):
+            raise ValidationError({
+                "archivo_xml ":(
+                    f"Los valores numerico del concepto {indice}"
+                    "no son validos"
+                )
+            })
+        conceptos.append({
+            "indice": indice,
+            "clave_prodserv": atributos.get("ClaveProdServ", ""),
+            "no_identificacion": atributos.get("NoIdentificacion", ""),
+            "cantidad": cantidad,
+            "clave_unidad": atributos.get("ClaveUnidad", ""),
+            "unidad": atributos.get("Unidad", ""),
+            "descripcion": descripcion,
+            "valor_unitario": valor_unitario,
+            "importe": importe,
+            "objeto_impuesto": atributos.get("ObjetoImp", ""),
+        })
+    return conceptos
+    

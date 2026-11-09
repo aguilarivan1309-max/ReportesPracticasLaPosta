@@ -245,6 +245,22 @@ class Activo(models.Model):
         related_name="activos",
         verbose_name="Artículo",
     )
+    factura = models.ForeignKey(
+        Factura, 
+        on_delete=models.PROTECT,
+         related_name="activos_generados",
+          null=True, 
+          blank=True,
+          verbose_name="Factura de adquisicion",
+    )
+    propuesta_origen = models.ForeignKey(
+        "PropuestaInventario",
+        on_delete=models.PROTECT,
+        related_name="activos_generados",
+        null=True, 
+        blank=True,
+        verbose_name="Propuesta de origen",
+    )
     estado = models.ForeignKey(
         EstadoActivo,
         on_delete=models.PROTECT,
@@ -371,6 +387,22 @@ class Componente(models.Model):
     activo = models.BooleanField(
         default=True,
         verbose_name="Activo",
+    )
+    factura = models.ForeignKey(
+        Factura, 
+        on_delete=models.PROTECT,
+        related_name="componentes_generados",
+        null=True,
+        blank=True,
+        verbose_name="Factura de adquisicion",
+    )
+    propuesta_origen = models.ForeignKey(
+        "PropuestaInventario",
+        on_delete=models.PROTECT,
+        related_name="componentes_generados",
+        null=True,
+        blank=True, 
+        verbose_name="Propuesta de origen",
     )
 
     class Meta:
