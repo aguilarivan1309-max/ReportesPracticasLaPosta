@@ -526,3 +526,159 @@ class Movimiento(models.Model):
 
     def __str__(self):
         return f"{self.activo.numero_inventario} - {self.get_tipo_display()}"
+
+class PropuestaInventario(models.Model):
+
+    class TipoRegistro(models.TextChoices):
+        POR_CLASIFICAR = "por_clasificar", "Por clasificar"
+        ACTIVO = "activo", "Activo"
+        COMPONENTE = "componente", "Componente"
+        NO_INVENTARIABLE = "no_inventariable", "No inventariable"
+
+    class EstadoRevision(models.TextChoices):
+        PENDIENTE = "pendiente", "Pendiente"
+        ACEPTADA = "aceptada", "Aceptada"
+        RECHAZADA = "rechazada", "Rechazada"
+        REGISTRADA = "registrada", "Registrada"
+
+    factura = models.ForeignKey(
+        Factura,
+        on_delete=models.PROTECT,
+        related_name="propuestas_inventario",
+        verbose_name="Factura de origen",
+    )
+
+    indice_concepto = models.PositiveIntegerField(
+        verbose_name="Número de concepto en XML",
+    )
+
+    clave_prodserv = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="Clave de producto o servicio SAT",
+    )
+
+    no_identificacion = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Identificador del concepto",
+    )
+
+    descripcion = models.TextField(
+        verbose_name="Descripción original",
+    )
+
+    cantidad = models.DecimalField(
+        max_digits=12,
+        decimal_places=6,
+        verbose_name="Cantidad adquirida",
+    )
+
+    clave_unidad = models.CharField(
+        max_length=10,
+        blank=True,
+        verbose_name="Clave de unidad SAT",
+    )
+
+    unidad = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name="Unidad de medida",
+    )
+
+    valor_unitario = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="Valor unitario",
+    )
+
+    importe = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="Importe",
+    )
+
+    objeto_impuesto = models.CharField(
+        max_length=2,
+        blank=True,
+        verbose_name="Objeto de impuesto",
+    )
+
+    tipo_registro = models.CharField(
+        max_length=20,
+        choices=TipoRegistro.choices,
+        default=TipoRegistro.POR_CLASIFICAR,
+        verbose_name="Clasificación propuesta",
+    )
+
+    articulo = models.ForeignKey(
+        "Articulo",
+        on_delete=models.PROTECT,
+        related_name="propuestas_inventario",
+        null=True,
+        blank=True,
+        verbose_name="Artículo relacionado",
+    )
+
+    estado_activo = models.ForeignKey(
+        "EstadoActivo",
+        on_delete=models.PROTECT,
+        related_name="propuestas_inventario",
+        null=True,
+        blank=True,
+        verbose_name="Estado inicial del activo",
+    )
+
+    marca = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Marca",
+    )
+
+    modelo = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Modelo",
+    )
+
+    estado_revision = models.CharField(
+        max_length=15,
+        choices=EstadoRevision.choices,
+        default=EstadoRevision.PENDIENTE,
+        verbose_name="Estado de revisión",
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+        verbose_name="Observaciones de revisión",
+    )
+
+    fecha_registro = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de registro",
+    )
+
+    fecha_revision = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Fecha de revisión",
+    )
+
+    class Meta:
+        ordering = ["factura", "indice_concepto"]
+        verbose_name = "Propuesta de inventario"
+        verbose_name_plural = "Propuestas de inventario"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["factura", "indice_concepto"],
+                name="propuesta_concepto_unico_por_factura",
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.factura.folio} - "
+            f"Concepto {self.indice_concepto}"
+        )
