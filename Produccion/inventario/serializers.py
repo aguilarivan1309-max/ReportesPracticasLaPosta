@@ -1,9 +1,8 @@
-
 from django.db import IntegrityError, transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from .models import Factura, Proveedor
+from .models import Factura, Proveedor, PropuestaInventario
 from .inventario.validadores import validar_pdf, validar_xml
 from .lectura_xml import extraer_datos_factura
 
@@ -105,3 +104,75 @@ class ProveedorSerializer(serializers.ModelSerializer):
             "activo",
         ]
         read_only_fields = ["id"]
+
+
+class FacturaActualizarSerializer(serializers.ModelSerializer):
+    """Permite cambiar solo el proveedor relacionado y el PDF de la factura."""
+
+    class Meta:
+        model = Factura
+        fields = ["id", "proveedor", "archivo_pdf"]
+        read_only_fields = ["id"]
+
+    def validate_archivo_pdf(self, value):
+        if value:
+            validar_pdf(value)
+        return value
+
+
+class PropuestaInventarioSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PropuestaInventario
+        fields = [
+            "id",
+            "factura",
+            "indice_concepto",
+            "clave_prodserv",
+            "no_identificacion",
+            "descripcion",
+            "cantidad",
+            "clave_unidad",
+            "unidad",
+            "valor_unitario",
+            "importe",
+            "objeto_impuesto",
+            "tipo_registro",
+            "articulo",
+            "estado_activo",
+            "marca",
+            "modelo",
+            "estado_revision",
+            "observaciones",
+            "fecha_registro",
+            "fecha_revision",
+        ]
+        # Solo se editan los datos de clasificación; lo demás viene del XML.
+        read_only_fields = [
+            "id",
+            "factura",
+            "indice_concepto",
+            "clave_prodserv",
+            "no_identificacion",
+            "descripcion",
+            "cantidad",
+            "clave_unidad",
+            "unidad",
+            "valor_unitario",
+            "importe",
+            "objeto_impuesto",
+            "estado_revision",
+            "fecha_registro",
+            "fecha_revision",
+        ]
+
+    def validate(self, attrs):
+        if (
+            self.instance
+            and self.instance.estado_revision
+            != PropuestaInventario.EstadoRevision.PENDIENTE
+        ):
+            raise ValidationError({
+                "estado_revision": "Solo se pueden editar propuestas pendientes."
+            })
+        return attrs
