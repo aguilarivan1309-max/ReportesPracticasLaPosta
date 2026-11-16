@@ -12,6 +12,7 @@ from rest_framework.response import Response
 
 from .conceptos_xml import extraer_conceptos_factura
 from .models import Factura, Proveedor, PropuestaInventario
+from .servicios import registrar_propuesta
 from .serializers import (
     FacturaActualizarSerializer,
     FacturaSerializer,
@@ -77,6 +78,10 @@ class ProveedorDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+# ---------------------------------------------------------------------------
+# Propuestas de inventario (apartado 12)
+# ---------------------------------------------------------------------------
 
 class FacturaPropuestasAPIView(generics.ListAPIView):
     """
@@ -215,3 +220,26 @@ class PropuestaAceptarAPIView(PropuestaRevisionAPIView):
 
 class PropuestaRechazarAPIView(PropuestaRevisionAPIView):
     nuevo_estado = PropuestaInventario.EstadoRevision.RECHAZADA
+
+
+class PropuestaRegistrarAPIView(generics.GenericAPIView):
+    """Convierte una propuesta aceptada en activos o componentes."""
+
+    serializer_class = PropuestaInventarioSerializer
+
+    @extend_schema(request=None, responses=PropuestaInventarioSerializer)
+    def post(self, request, pk):
+        with transaction.atomic():
+            propuesta = get_object_or_404(
+                PropuestaInventario.objects.select_for_update(), pk=pk
+            )
+            activos, componentes = registrar_propuesta(propuesta)
+
+        return Response(
+            {
+                "propuesta": self.get_serializer(propuesta).data,
+                "activos": [a.numero_inventario for a in activos],
+                "componentes": [c.id for c in componentes],
+            },
+            status=status.HTTP_201_CREATED,
+        )
