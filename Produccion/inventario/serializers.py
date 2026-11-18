@@ -1,10 +1,12 @@
 from django.db import IntegrityError, transaction
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from .models import Factura, Proveedor, PropuestaInventario
 from .inventario.validadores import validar_pdf, validar_xml
 from .lectura_xml import extraer_datos_factura
+from .servicios import datos_faltantes
 
 
 class FacturaSerializer(serializers.ModelSerializer):
@@ -121,6 +123,17 @@ class FacturaActualizarSerializer(serializers.ModelSerializer):
 
 
 class PropuestaInventarioSerializer(serializers.ModelSerializer):
+    datos_faltantes = serializers.SerializerMethodField()
+    completa = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.DictField(child=serializers.CharField()))
+    def get_datos_faltantes(self, obj):
+        """Campos que faltan para aceptar la propuesta, con su mensaje."""
+        return datos_faltantes(obj)
+
+    @extend_schema_field(serializers.BooleanField())
+    def get_completa(self, obj):
+        return not datos_faltantes(obj)
 
     class Meta:
         model = PropuestaInventario
@@ -146,6 +159,8 @@ class PropuestaInventarioSerializer(serializers.ModelSerializer):
             "observaciones",
             "fecha_registro",
             "fecha_revision",
+            "datos_faltantes",
+            "completa",
         ]
         # Solo se editan los datos de clasificación; lo demás viene del XML.
         read_only_fields = [
