@@ -11,10 +11,13 @@ from rest_framework.test import APITestCase
 
 from .models import Factura, Proveedor
 
+from .pruebas_utils import autenticar
+from.roles import ADMINISTRADOR
 
 class FacturaAPITests(APITestCase):
 
     def setUp(self):
+        autenticar(self.client, ADMINISTRADOR)
         media = tempfile.TemporaryDirectory()
         self.addCleanup(media.cleanup)
         settings = override_settings(MEDIA_ROOT=media.name)
@@ -88,6 +91,7 @@ class FacturaAPITests(APITestCase):
         )
 class ProveedorAPITests(APITestCase):
     def setUp(self):
+        autenticar(self.client, ADMINISTRADOR)
         self.proveedor = Proveedor.objects.create(nombre="Proveedor de prueba", rfc="CCC010101CCC")
         self.url = reverse("proveedor-list-create")
         self.detalle = reverse("proveedor-detail", args=[self.proveedor.pk])

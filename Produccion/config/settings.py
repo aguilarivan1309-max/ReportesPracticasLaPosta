@@ -1,4 +1,5 @@
 ﻿import os
+from datetime import timedelta 
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -83,9 +84,24 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
-REST_FRAMEWORK  = {
-    "DEFAULT_SCHEMA_CLASS": 'drf_spectacular.openapi.AutoSchema',
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "inventario.permisos.PermisoPorRol",
+    ],
 }
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "UPDATE_LAST_LOGIN": True,
+}
+
 SPECTACULAR_SETTINGS = {
     'TITLE': 'API de Inventario y Facturas',
     'DESCRIPTION': 'API para la gestión y consulta de facturas del sistema de inventario.',
@@ -95,6 +111,7 @@ SPECTACULAR_SETTINGS = {
     'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
     'REDOC_DIST': 'SIDECAR',
     "COMPONENT_SPLIT_REQUEST": True,
+    "SWAGGER_UI_LOGIN": True,
 }
 
 # Idioma, zona horaria y fechas

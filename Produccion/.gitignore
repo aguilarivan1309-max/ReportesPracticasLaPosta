@@ -37,3 +37,8 @@ compose.override.yaml
 
 # Documentos locales de prácticas
 #/facturas/
+
+# Respaldos locales de bases de datos
+*.dump
+*.backup
+*.bak

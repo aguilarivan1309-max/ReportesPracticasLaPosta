@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from .inventario.validadores import validar_pdf, validar_xml
 from django.db import models
+from django.conf import settings
 
 
 class Factura(models.Model):
@@ -517,6 +518,14 @@ class Movimiento(models.Model):
     observaciones = models.TextField(
         blank=True,
         verbose_name="Observaciones",
+    )
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="movimientos_registrados",
+        null=True,
+        blank=True,
+        verbose_name="Usuario que registro",
     )
 
     class Meta:
