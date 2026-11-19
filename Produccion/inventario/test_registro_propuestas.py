@@ -1,5 +1,8 @@
 import tempfile
 from datetime import date
+from unittest.mock import patch
+
+from django.db import IntegrityError
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
@@ -114,3 +117,28 @@ class RegistroPropuestasAPITests(APITestCase):
         )
         r = self.registrar(self.ram)
         self.assertTrue(r.data["activos"][0].endswith("-0003"))
+
+    def test_registrar_propuesta_inexistente(self):
+        response = self.client.post("/api/propuestas/999999/registrar/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_fallo_en_movimiento_revierte_toda_el_alta(self):
+        self.aceptar_laptop()
+        crear_movimiento = Movimiento.objects.create
+        llamadas = 0
+
+        def crear_o_fallar(**datos):
+            nonlocal llamadas
+            llamadas += 1
+            if llamadas == 2:
+                raise IntegrityError("Fallo simulado en el segundo movimiento")
+            return crear_movimiento(**datos)
+
+        with patch("inventario.servicios.Movimiento.objects.create", side_effect=crear_o_fallar):
+            response = self.registrar(self.laptop)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Activo.objects.count(), 0)
+        self.assertEqual(Movimiento.objects.count(), 0)
+        self.laptop.refresh_from_db()
+        self.assertEqual(self.laptop.estado_revision, "aceptada")

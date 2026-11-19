@@ -4,8 +4,8 @@ from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema
-from rest_framework import generics, status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import generics, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
@@ -18,6 +18,8 @@ from .serializers import (
     ProveedorSerializer,
     PropuestaInventarioSerializer,
 )
+
+from .servicios import registrar_propuesta
 
 CENTAVOS = Decimal("0.01")
 
@@ -215,3 +217,33 @@ class PropuestaAceptarAPIView(PropuestaRevisionAPIView):
 
 class PropuestaRechazarAPIView(PropuestaRevisionAPIView):
     nuevo_estado = PropuestaInventario.EstadoRevision.RECHAZADA
+
+class PropuestaRegistrarAPIView(generics.GenericAPIView):
+    serializer_class = PropuestaInventarioSerializer
+
+    @extend_schema(
+        request=None,
+        responses={
+            201: inline_serializer(
+                name="RegistroPropuesta",
+                fields={
+                    "activos": serializers.ListField(child=serializers.CharField()),
+                    "componentes": serializers.ListField(child=serializers.IntegerField()),
+                },
+            ),
+        },
+    )
+    def post(self, request, pk):
+        with transaction.atomic():
+            propuesta = get_object_or_404(
+                PropuestaInventario.objects.select_for_update(), pk=pk
+            )
+            self.check_object_permissions(request, propuesta)
+            activos, componentes = registrar_propuesta(propuesta)
+        return Response(
+            {
+                "activos": [activo.numero_inventario for activo in activos],
+                "componentes": [componente.pk for componente in componentes],
+            },
+            status=status.HTTP_201_CREATED,
+        )

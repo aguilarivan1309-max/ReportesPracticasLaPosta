@@ -8,11 +8,13 @@ from .views import (
     PropuestaDetailAPIView,
     PropuestaListAPIView,
     PropuestaRechazarAPIView,
+    PropuestaRegistrarAPIView,
     ProveedorDetailAPIView,
     ProveedorListCreateAPIView,
 )
 
 urlpatterns = [
+    path("propuestas/<int:pk>/registrar/", PropuestaRegistrarAPIView.as_view(), name="propuesta-registrar"),
     path("facturas/", FacturaListCreateAPIView.as_view(), name="factura-list-create"),
     path("facturas/<int:pk>/", FacturaDetailAPIView.as_view(), name="factura-detail"),
     path(
