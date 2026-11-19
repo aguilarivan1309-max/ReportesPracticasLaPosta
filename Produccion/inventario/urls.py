@@ -1,4 +1,5 @@
 from django.urls import path
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import (
     FacturaDetailAPIView,
@@ -11,9 +12,15 @@ from .views import (
     PropuestaRechazarAPIView,
     ProveedorDetailAPIView,
     ProveedorListCreateAPIView,
+    UsuarioActualAPIView,
 )
 
 urlpatterns = [
+    # autenticacion (JWT)
+    path("auth/token/", TokenObtainPairView.as_view(), name="token-obtain"),
+    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    path("auth/yo/", UsuarioActualAPIView.as_view(), name="auth-yo"),
+
     path("facturas/", FacturaListCreateAPIView.as_view(), name="factura-list-create"),
     path("facturas/<int:pk>/", FacturaDetailAPIView.as_view(), name="factura-detail"),
     path(

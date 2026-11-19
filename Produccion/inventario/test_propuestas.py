@@ -7,6 +7,8 @@ from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from .pruebas_utils import autenticar
+from .roles import ADMINISTRADOR
 from .models import (
     Articulo,
     EstadoActivo,
@@ -35,6 +37,7 @@ XML_DOS_CONCEPTOS = b"""<?xml version="1.0" encoding="UTF-8"?>
 class PropuestaInventarioAPITests(APITestCase):
 
     def setUp(self):
+        autenticar(self.client, ADMINISTRADOR)
         self.factura = Factura.objects.create(
             folio="P-001",
             fecha_emision=date(2026, 11, 1),

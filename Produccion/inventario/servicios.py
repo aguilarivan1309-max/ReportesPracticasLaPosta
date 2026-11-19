@@ -47,7 +47,7 @@ def _unidades(propuesta):
     return unidades
 
 
-def registrar_propuesta(propuesta):
+def registrar_propuesta(propuesta, usuario=None):
     """
     Convierte una propuesta aceptada en activos o componentes.
 
@@ -93,6 +93,7 @@ def registrar_propuesta(propuesta):
                     Movimiento.objects.create(
                         activo=activo,
                         tipo=Movimiento.TipoMovimiento.ALTA,
+                        usuario=usuario,
                         observaciones=(
                             f"Alta desde factura {factura.folio}, "
                             f"concepto {propuesta.indice_concepto}."

@@ -16,6 +16,8 @@ from .models import (
     PropuestaInventario,
     TipoBien,
 )
+from .pruebas_utils import autenticar
+from .roles import OPERADOR
 from .test_propuestas import XML_DOS_CONCEPTOS
 
 
@@ -23,6 +25,7 @@ from .test_propuestas import XML_DOS_CONCEPTOS
 class RegistroPropuestasAPITests(APITestCase):
 
     def setUp(self):
+        self.usuario = autenticar(self.client, OPERADOR)
         self.factura = Factura.objects.create(
             folio="R-001",
             fecha_emision=date(2026, 11, 1),
@@ -114,3 +117,9 @@ class RegistroPropuestasAPITests(APITestCase):
         )
         r = self.registrar(self.ram)
         self.assertTrue(r.data["activos"][0].endswith("-0003"))
+
+    def test_movimiento_guarda_el_usuario(self):
+        self.aceptar_laptop()
+        self.registrar(self.laptop)
+        for movimiento in Movimiento.objects.all():
+            self.assertEqual(movimiento.usuario, self.usuario)

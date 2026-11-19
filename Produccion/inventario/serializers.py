@@ -176,3 +176,11 @@ class PropuestaInventarioSerializer(serializers.ModelSerializer):
                 "estado_revision": "Solo se pueden editar propuestas pendientes."
             })
         return attrs
+
+
+class UsuarioActualSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    username = serializers.CharField()
+    nombre_completo = serializers.CharField()
+    roles = serializers.ListField(child=serializers.CharField())
+    es_superusuario = serializers.BooleanField()

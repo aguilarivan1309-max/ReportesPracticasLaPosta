@@ -8,7 +8,9 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .conceptos_xml import extraer_conceptos_factura
 from .models import Factura, Proveedor, PropuestaInventario
@@ -18,6 +20,7 @@ from .serializers import (
     FacturaSerializer,
     ProveedorSerializer,
     PropuestaInventarioSerializer,
+    UsuarioActualSerializer,
 )
 
 CENTAVOS = Decimal("0.01")
@@ -233,7 +236,9 @@ class PropuestaRegistrarAPIView(generics.GenericAPIView):
             propuesta = get_object_or_404(
                 PropuestaInventario.objects.select_for_update(), pk=pk
             )
-            activos, componentes = registrar_propuesta(propuesta)
+            activos, componentes = registrar_propuesta(
+                propuesta, usuario=request.user
+            )
 
         return Response(
             {
@@ -243,3 +248,21 @@ class PropuestaRegistrarAPIView(generics.GenericAPIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class UsuarioActualAPIView(APIView):
+    """Datos del usuario autenticado y sus roles (útil para la interfaz)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses=UsuarioActualSerializer)
+    def get(self, request):
+        usuario = request.user
+        datos = {
+            "id": usuario.id,
+            "username": usuario.get_username(),
+            "nombre_completo": usuario.get_full_name(),
+            "roles": list(usuario.groups.values_list("name", flat=True)),
+            "es_superusuario": usuario.is_superuser,
+        }
+        return Response(UsuarioActualSerializer(datos).data)
