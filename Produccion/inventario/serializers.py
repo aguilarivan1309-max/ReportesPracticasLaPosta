@@ -184,3 +184,29 @@ class UsuarioActualSerializer(serializers.Serializer):
     nombre_completo = serializers.CharField()
     roles = serializers.ListField(child=serializers.CharField())
     es_superusuario = serializers.BooleanField()
+
+class ActivoBajaSerializer(serializers.Serializer):
+    motivo = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        trim_whitespace=True,
+        min_length=5,
+        max_length=1000,
+    )
+    def validate_motivo(self, value):
+        texto = value.strip()
+        if not texto: 
+            raise ValidationError("El motivo de baja es obligatorio")
+        return texto 
+class ActivoBajaRespuestaSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    numero_inventario = serializers.CharField()
+    estado = serializers.CharField()
+    responsable = serializers.CharField(allow_null=True)
+    ubicacion = serializers.CharField(allow_null=True)
+    fecha_baja = serializers.DateTimeField()
+    motivo = serializers.CharField()
+    usuario = serializers.CharField(allow_null=True)
+    movimiento_id = serializers.IntegerField()
+
+

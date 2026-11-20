@@ -13,9 +13,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .conceptos_xml import extraer_conceptos_factura
-from .models import Factura, Proveedor, PropuestaInventario
-from .servicios import registrar_propuesta
+from .models import Activo, Factura, Proveedor, PropuestaInventario
+from .servicios import dar_baja_activo, registrar_propuesta
 from .serializers import (
+    ActivoBajaRespuestaSerializer,
+    ActivoBajaSerializer,
     FacturaActualizarSerializer,
     FacturaSerializer,
     ProveedorSerializer,
@@ -266,3 +268,51 @@ class UsuarioActualAPIView(APIView):
             "es_superusuario": usuario.is_superuser,
         }
         return Response(UsuarioActualSerializer(datos).data)
+
+class ActivoBajaAPIView(generics.GenericAPIView):
+    """Registra la baja lógica de un activo conservando su historial."""
+
+    serializer_class = ActivoBajaSerializer
+
+    @extend_schema(
+        request=ActivoBajaSerializer,
+        responses={200: ActivoBajaRespuestaSerializer},
+    )
+    def post(self, request, pk):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        with transaction.atomic():
+            activo = get_object_or_404(
+                Activo.objects.select_related(
+                    "estado", "ubicacion", "responsable"
+                ).select_for_update(of=("self",)),
+                pk=pk,
+            )
+            activo, movimiento = dar_baja_activo(
+                activo=activo,
+                motivo=serializer.validated_data["motivo"],
+                usuario=request.user,
+            )
+
+        respuesta = {
+            "id": activo.id,
+            "numero_inventario": activo.numero_inventario,
+            "estado": activo.estado.nombre,
+            "ubicacion": str(activo.ubicacion) if activo.ubicacion else None,
+            "responsable": (
+                str(activo.responsable) if activo.responsable else None
+            ),
+            "fecha_baja": movimiento.fecha,
+            "motivo": movimiento.observaciones,
+            "usuario": (
+                movimiento.usuario.get_username()
+                if movimiento.usuario
+                else None
+            ),
+            "movimiento_id": movimiento.id,
+        }
+        return Response(
+            ActivoBajaRespuestaSerializer(respuesta).data,
+            status=status.HTTP_200_OK,
+        )

@@ -2,6 +2,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import (
+    ActivoBajaAPIView,
     FacturaDetailAPIView,
     FacturaListCreateAPIView,
     FacturaPropuestasAPIView,
@@ -34,6 +35,8 @@ urlpatterns = [
     path("propuestas/<int:pk>/aceptar/", PropuestaAceptarAPIView.as_view(), name="propuesta-aceptar"),
     path("propuestas/<int:pk>/registrar/", PropuestaRegistrarAPIView.as_view(), name="propuesta-registrar"),
     path("propuestas/<int:pk>/rechazar/", PropuestaRechazarAPIView.as_view(), name="propuesta-rechazar"),
+
+    path("activos/<int:pk>/baja/", ActivoBajaAPIView.as_view(), name="activo-baja"),
 
     path("proveedores/", ProveedorListCreateAPIView.as_view(), name="proveedor-list-create"),
     path("proveedores/<int:pk>/", ProveedorDetailAPIView.as_view(), name="proveedor-detail"),

@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 from .models import (
     Activo,
     Componente,
+    EstadoActivo,
     EstadoComponente,
     Movimiento,
     PropuestaInventario,
@@ -15,7 +16,7 @@ from .models import (
 PREFIJO_INVENTARIO = "INV"
 MAX_UNIDADES = 1000
 ESTADO_COMPONENTE_INICIAL = "Disponible"
-
+ESTADO_ACTIVO_BAJA = 'Baja'
 
 def _siguiente_consecutivo(prefijo):
     """Devuelve el siguiente consecutivo para un prefijo INV-AAAA-."""
@@ -124,3 +125,65 @@ def registrar_propuesta(propuesta, usuario=None):
         })
 
     return activos, componentes
+def dar_baja_activo(activo, motivo, usuario=None):
+    """
+    Ejecuta la logica de un activo consevando a sus responsable, ubicacion e
+    historial de movimientos.
+
+    Bloquea la operacion en caso de que el activo ya se encuentre en estado 'Baja' o si
+    tiene componentes instalados pendientes de reitro. Debe llamarse dentro de
+    transaction.atomic() con el activo bloqueado mediante select_for_update().
+    """
+    motivo_limpio = (motivo or "").strip()
+    if not motivo_limpio:
+        raise ValidationError({
+            "motivo": "El motivo de baja es obligatorio."
+        })
+    if activo.estado.nombre.strip().lower() == ESTADO_ACTIVO_BAJA.lower():
+        raise ValidationError({
+            "estado": "El activo ya se encuentra dado de baja."
+        })
+    instalados = list(
+        activo.componentes_instalados.select_related("componente").filter(
+            fecha_retiro__isnull=True
+        )
+    )
+    if instalados:
+        detalle_componentes = ", ".join(
+            f"{ci.componente.nombre}"
+            +(
+                f"(S/N: {ci.componente.numero_serie})"
+                if ci.componente.numero_serie
+                else "" 
+            )
+            for ci in instalados
+        )
+        raise ValidationError({
+            "componentes_instalados":(
+                f"No se puede dar de baja el activo por que tiene "
+                f"{len(instalados)} componente(s) instalado(s) sin retirar: "
+                f"{detalle_componentes}."
+            )
+        })
+    estado_baja, _ = EstadoActivo.objects.get_or_create(
+        nombre=ESTADO_ACTIVO_BAJA,
+        defaults={
+            "descripcion": "Activo dado de baja del invetario operativo. ",
+        },
+    )
+    #Se conservan activo.responsable y activo.ubicacion intactos 
+    activo.estado = estado_baja
+    activo.save(update_fields=["estado"])
+
+    usuario_registro = (
+        usuario if (usuario is not None and usuario.is_authenticated) else None
+    )
+    movimiento = Movimiento.objects.create(
+        activo=activo,
+        tipo=Movimiento.TipoMovimiento.BAJA,
+        responsable_origen=activo.responsable,
+        ubicacion_origen=activo.ubicacion,
+        observaciones=motivo_limpio,
+        usuario=usuario_registro,
+    )
+    return activo, movimiento 
