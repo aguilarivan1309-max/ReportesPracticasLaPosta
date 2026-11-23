@@ -9,6 +9,7 @@ from .services import es_sensible, formatear_valor, registrar_auditoria
 
 User = get_user_model()
 MODELOS_AUDITADOS = {
+    "inventario.EtiquetaQR",
     User._meta.label, Group._meta.label,
     "inventario.Proveedor", "inventario.Factura", "inventario.PropuestaInventario",
     "inventario.Ubicacion", "inventario.TipoBien",

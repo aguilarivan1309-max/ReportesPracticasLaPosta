@@ -115,3 +115,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
+
+# Dirección provisional de la futura página de consulta.
+QR_PUBLIC_BASE_URL = os.environ.get("QR_PUBLIC_BASE_URL", "http://localhost:3000/consulta/qr")
