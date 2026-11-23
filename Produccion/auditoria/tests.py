@@ -1,5 +1,7 @@
 import json
 from types import SimpleNamespace
+from datetime import date
+from decimal import Decimal
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -9,7 +11,21 @@ from django.db import transaction
 from django.test import RequestFactory, TestCase
 from django.utils.functional import SimpleLazyObject
 
-from inventario.models import Proveedor
+from inventario.models import (
+    Proveedor,
+    Factura,
+    PropuestaInventario,
+    TipoBien,
+    Articulo,
+    EstadoActivo,
+    EstadoComponente,
+    Ubicacion,
+    Responsable,
+    Activo,
+    Componente,
+    ComponenteInstalado,
+    Movimiento,
+)
 from .middleware import AuditoriaMiddleware, obtener_ip_actual, obtener_usuario_actual
 from .models import RegistroAuditoria
 from .services import registrar_auditoria
@@ -166,3 +182,244 @@ class AuditoriaTests(TestCase):
         RegistroAuditoria.objects.all().delete()
         grupo.permissions.clear()
         self.assertEqual(json.loads(RegistroAuditoria.objects.get().valor_anterior), ["add_proveedor"])
+
+class CoberturaModelosInventarioTests(TestCase):
+
+    def verificar_creacion_auditada(self, objeto):
+        content_type = ContentType.objects.get_for_model(objeto)
+
+        registro = RegistroAuditoria.objects.get(
+            content_type=content_type,
+            object_id=str(objeto.pk),
+            accion="Creación",
+        )
+
+        self.assertEqual(registro.objeto, objeto)
+
+    def test_creacion_de_modelos_inventario(self):
+        proveedor = Proveedor.objects.create(
+            nombre="Proveedor de prueba",
+            rfc="XAXX010101000",
+        )
+
+        factura = Factura.objects.create(
+            folio="FAC-TEST-001",
+            fecha_emision=date(2026, 11, 23),
+            proveedor_nombre=proveedor.nombre,
+            proveedor=proveedor,
+            importe_total=Decimal("15000.00"),
+        )
+
+        tipo_bien = TipoBien.objects.create(
+            nombre="Equipo de cómputo",
+        )
+
+        articulo = Articulo.objects.create(
+            tipo_bien=tipo_bien,
+            nombre="Computadora de escritorio",
+        )
+
+        estado_activo = EstadoActivo.objects.create(
+            nombre="Almacenamiento",
+        )
+
+        estado_componente = EstadoComponente.objects.create(
+            nombre="Disponible",
+        )
+
+        ubicacion = Ubicacion.objects.create(
+            nombre="Almacén principal",
+        )
+
+        responsable = Responsable.objects.create(
+            nombre="Juan",
+            apellidos="Pérez",
+            numero_empleado="EMP-001",
+        )
+
+        propuesta = PropuestaInventario.objects.create(
+            factura=factura,
+            indice_concepto=1,
+            descripcion="Computadora de escritorio",
+            cantidad=Decimal("1.000000"),
+        )
+
+        activo = Activo.objects.create(
+            numero_inventario="INV-TEST-001",
+            articulo=articulo,
+            factura=factura,
+            propuesta_origen=propuesta,
+            estado=estado_activo,
+            ubicacion=ubicacion,
+            responsable=responsable,
+        )
+
+        componente = Componente.objects.create(
+            estado=estado_componente,
+            nombre="Memoria RAM",
+            factura=factura,
+        )
+
+        instalacion = ComponenteInstalado.objects.create(
+            activo=activo,
+            componente=componente,
+            fecha_instalacion=date(2026, 11, 23),
+        )
+
+        movimiento = Movimiento.objects.create(
+            activo=activo,
+            tipo=Movimiento.TipoMovimiento.ALTA,
+            ubicacion_destino=ubicacion,
+            responsable_destino=responsable,
+        )
+
+        objetos = [
+            proveedor,
+            factura,
+            tipo_bien,
+            articulo,
+            estado_activo,
+            estado_componente,
+            ubicacion,
+            responsable,
+            propuesta,
+            activo,
+            componente,
+            instalacion,
+            movimiento,
+        ]
+
+        for objeto in objetos:
+            with self.subTest(modelo=objeto.__class__.__name__):
+                self.verificar_creacion_auditada(objeto)
+
+    def test_modificacion_de_activo(self):
+        tipo = TipoBien.objects.create(nombre="Equipo")
+        articulo = Articulo.objects.create(
+            tipo_bien=tipo,
+            nombre="Laptop",
+        )
+        estado = EstadoActivo.objects.create(
+            nombre="En almacenamiento",
+        )
+
+        activo = Activo.objects.create(
+            numero_inventario="INV-MOD-001",
+            articulo=articulo,
+            estado=estado,
+            numero_serie="SERIE-ANTERIOR",
+        )
+
+        RegistroAuditoria.objects.all().delete()
+
+        activo.numero_serie = "SERIE-NUEVA"
+        activo.save()
+
+        registro = RegistroAuditoria.objects.get(
+            object_id=str(activo.pk),
+            campo_modificado="numero_serie",
+        )
+
+        self.assertEqual(registro.accion, "Modificación")
+        self.assertEqual(registro.valor_anterior, "SERIE-ANTERIOR")
+        self.assertEqual(registro.valor_nuevo, "SERIE-NUEVA")
+
+    def test_modificacion_de_componente_instalado(self):
+        tipo = TipoBien.objects.create(nombre="Equipo")
+        articulo = Articulo.objects.create(
+            tipo_bien=tipo,
+            nombre="Computadora",
+        )
+        estado_activo = EstadoActivo.objects.create(
+            nombre="En uso",
+        )
+        estado_componente = EstadoComponente.objects.create(
+            nombre="Instalado",
+        )
+
+        activo = Activo.objects.create(
+            numero_inventario="INV-MOD-002",
+            articulo=articulo,
+            estado=estado_activo,
+        )
+
+        componente = Componente.objects.create(
+            estado=estado_componente,
+            nombre="Memoria RAM",
+        )
+
+        instalacion = ComponenteInstalado.objects.create(
+            activo=activo,
+            componente=componente,
+            fecha_instalacion=date(2026, 11, 20),
+        )
+
+        RegistroAuditoria.objects.all().delete()
+
+        instalacion.fecha_retiro = date(2026, 11, 23)
+        instalacion.save()
+
+        registro = RegistroAuditoria.objects.get(
+            object_id=str(instalacion.pk),
+            campo_modificado="fecha_retiro",
+        )
+
+        self.assertEqual(registro.accion, "Modificación")
+        self.assertEqual(
+            registro.valor_anterior,
+            "Vacío",
+        )
+        self.assertEqual(
+            registro.valor_nuevo,
+            "2026-11-23",
+        )
+
+    def test_modificacion_de_propuesta_inventario(self):
+        factura = Factura.objects.create(
+            folio="FAC-MOD-001",
+            fecha_emision=date(2026, 11, 23),
+            proveedor_nombre="Proveedor de prueba",
+        )
+
+        propuesta = PropuestaInventario.objects.create(
+            factura=factura,
+            indice_concepto=1,
+            descripcion="Memoria RAM",
+            cantidad=Decimal("2.000000"),
+        )
+
+        RegistroAuditoria.objects.all().delete()
+
+        propuesta.estado_revision = (
+            PropuestaInventario.EstadoRevision.ACEPTADA
+        )
+        propuesta.save()
+
+        registro = RegistroAuditoria.objects.get(
+            object_id=str(propuesta.pk),
+            campo_modificado="estado_revision",
+        )
+
+        self.assertEqual(registro.accion, "Modificación")
+        self.assertEqual(registro.valor_anterior, "Pendiente")
+        self.assertEqual(registro.valor_nuevo, "Aceptada")
+
+    def test_eliminacion_de_ubicacion(self):
+        ubicacion = Ubicacion.objects.create(
+            nombre="Ubicación para eliminación",
+        )
+
+        content_type = ContentType.objects.get_for_model(ubicacion)
+        object_id = str(ubicacion.pk)
+
+        RegistroAuditoria.objects.all().delete()
+
+        ubicacion.delete()
+
+        registro = RegistroAuditoria.objects.get(
+            content_type=content_type,
+            object_id=object_id,
+            accion="Eliminación",
+        )
+
+        self.assertIsNone(registro.objeto)

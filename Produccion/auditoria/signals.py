@@ -9,10 +9,30 @@ from .services import es_sensible, formatear_valor, registrar_auditoria
 
 User = get_user_model()
 MODELOS_AUDITADOS = {
-    User._meta.label, Group._meta.label,
-    "inventario.Proveedor", "inventario.Factura", "inventario.PropuestaInventario",
-    "inventario.Ubicacion", "inventario.TipoBien",
+    # Usuarios y permisos
+    User._meta.label,
+    Group._meta.label,
+
+    # Compras y propuestas
+    "inventario.Proveedor",
+    "inventario.Factura",
+    "inventario.PropuestaInventario",
+
+    # Catálogos
+    "inventario.TipoBien",
+    "inventario.Articulo",
+    "inventario.EstadoActivo",
+    "inventario.EstadoComponente",
+    "inventario.Ubicacion",
+    "inventario.Responsable",
+
+    # Inventario
+    "inventario.Activo",
+    "inventario.Componente",
+    "inventario.ComponenteInstalado",
+    "inventario.Movimiento",
 }
+
 CAMPOS_IGNORADOS = {"id", "password", "last_login"}
 
 
@@ -23,7 +43,6 @@ def campos_modelo(instance):
         and field.name not in CAMPOS_IGNORADOS
         and not es_sensible(field.name)
     ]
-
 
 def antes_guardar(sender, instance, using, raw=False, **kwargs):
     if raw:
