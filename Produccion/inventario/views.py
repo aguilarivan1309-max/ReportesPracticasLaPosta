@@ -1,3 +1,9 @@
+from django.http import HttpResponse
+from django.utils.http import content_disposition_header
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.views import APIView
+from drf_spectacular.types import OpenApiTypes
+from .servicios_qr import construir_url_qr, generar_imagen_qr, obtener_o_crear_etiqueta
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.db import transaction
@@ -11,8 +17,9 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from .conceptos_xml import extraer_conceptos_factura
-from .models import Factura, Proveedor, PropuestaInventario
+from .models import Factura, Proveedor, PropuestaInventario, Activo, EtiquetaQR, Movimiento
 from .serializers import (
+    EtiquetaQRSerializer,
     FacturaActualizarSerializer,
     FacturaSerializer,
     ProveedorSerializer,
@@ -247,3 +254,80 @@ class PropuestaRegistrarAPIView(generics.GenericAPIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class ActivoQRView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def respuesta(self, request, etiqueta, codigo=200):
+        datos = EtiquetaQRSerializer(etiqueta, context={"request": request}).data
+        response = Response(datos, status=codigo)
+        response["Cache-Control"] = "no-store"
+        return response
+
+    @extend_schema(responses=EtiquetaQRSerializer)
+    def get(self, request, activo_id):
+        activo = get_object_or_404(Activo, pk=activo_id)
+        etiqueta = get_object_or_404(EtiquetaQR, activo=activo)
+        return self.respuesta(request, etiqueta)
+
+    @extend_schema(request=None, responses={200: EtiquetaQRSerializer, 201: EtiquetaQRSerializer})
+    def post(self, request, activo_id):
+        etiqueta, creada = obtener_o_crear_etiqueta(activo_id)
+        if not etiqueta.activa:
+            return Response({"detail": "La etiqueta QR está desactivada."}, status=409)
+        return self.respuesta(request, etiqueta, 201 if creada else 200)
+
+    @extend_schema(request=None, responses={204: None})
+    def delete(self, request, activo_id):
+        with transaction.atomic():
+            activo = get_object_or_404(Activo.objects.select_for_update(), pk=activo_id)
+            etiqueta = get_object_or_404(EtiquetaQR, activo=activo)
+            if etiqueta.activa:
+                etiqueta.activa = False
+                etiqueta.save(update_fields=["activa", "fecha_actualizacion"])
+        return Response(status=204)
+
+
+class ActivoQRImagenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses={(200, "image/png"): OpenApiTypes.BINARY})
+    def get(self, request, activo_id):
+        activo = get_object_or_404(Activo, pk=activo_id)
+        etiqueta = get_object_or_404(EtiquetaQR, activo=activo, activa=True)
+        imagen = generar_imagen_qr(construir_url_qr(etiqueta))
+        respuesta = HttpResponse(imagen.getvalue(), content_type="image/png")
+        respuesta["Content-Disposition"] = content_disposition_header(False, f"qr_{activo.numero_inventario}.png")
+        respuesta["Cache-Control"] = "no-store"
+        respuesta["X-Content-Type-Options"] = "nosniff"
+        return respuesta
+
+
+class ConsultaQRPublicaView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    @extend_schema(responses=inline_serializer(name="ConsultaPublicaQR", fields={
+        "numero_inventario": serializers.CharField(),
+        "articulo": serializers.CharField(),
+        "tipo_bien": serializers.CharField(),
+        "estado": serializers.CharField(),
+        "ultima_actualizacion": serializers.DateTimeField(),
+    }))
+    def get(self, request, token):
+        etiqueta = get_object_or_404(
+            EtiquetaQR.objects.select_related("activo__articulo__tipo_bien", "activo__estado"),
+            token=token, activa=True,
+        )
+        activo = etiqueta.activo
+        ultimo = Movimiento.objects.filter(activo=activo).order_by("-fecha", "-pk").first()
+        response = Response({
+            "numero_inventario": activo.numero_inventario,
+            "articulo": activo.articulo.nombre,
+            "tipo_bien": activo.articulo.tipo_bien.nombre,
+            "estado": activo.estado.nombre,
+            "ultima_actualizacion": ultimo.fecha if ultimo else etiqueta.fecha_actualizacion,
+        })
+        response["Cache-Control"] = "no-store"
+        return response

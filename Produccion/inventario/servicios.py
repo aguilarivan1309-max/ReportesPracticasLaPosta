@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 
 from .models import (
     Activo,
+    EtiquetaQR,
     Componente,
     EstadoComponente,
     Movimiento,
@@ -139,6 +140,8 @@ def registrar_propuesta(propuesta):
                         estado=propuesta.estado_activo,
                         fecha_adquisicion=factura.fecha_emision,
                     )
+                    if activo.articulo.tipo_bien.requiere_qr:
+                        EtiquetaQR.objects.create(activo=activo)
                     Movimiento.objects.create(
                         activo=activo,
                         tipo=Movimiento.TipoMovimiento.ALTA,

@@ -3,3 +3,4 @@ djangorestframework>=3.16,<4.0
 psycopg[binary]>=3.2,<4.0
 drf-spectacular>=0.28,<1.0
 drf-spectacular-sidecar>=2025.1.1
+qrcode[pil]>=8.2,<9

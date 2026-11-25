@@ -1,3 +1,4 @@
+import uuid
 from django.core.exceptions import ValidationError
 from .inventario.validadores import validar_pdf, validar_xml
 from django.db import models
@@ -682,3 +683,24 @@ class PropuestaInventario(models.Model):
             f"{self.factura.folio} - "
             f"Concepto {self.indice_concepto}"
         )
+
+
+class EtiquetaQR(models.Model):
+    activo = models.OneToOneField(
+        Activo, on_delete=models.CASCADE, related_name="etiqueta_qr",
+        verbose_name="Activo relacionado",
+    )
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False,
+                             verbose_name="Token QR")
+    activa = models.BooleanField(default=True, verbose_name="Etiqueta activa")
+    fecha_generacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de generación")
+
+    fecha_actualizacion = models.DateTimeField(auto_now=True, verbose_name="Última actualización")
+
+    class Meta:
+        ordering = ["-fecha_generacion"]
+        verbose_name = "Etiqueta QR"
+        verbose_name_plural = "Etiquetas QR"
+
+    def __str__(self):
+        return f"QR - {self.activo.numero_inventario}"

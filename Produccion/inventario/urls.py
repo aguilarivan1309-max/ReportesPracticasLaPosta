@@ -1,6 +1,9 @@
 from django.urls import path
 
 from .views import (
+    ConsultaQRPublicaView,
+    ActivoQRView,
+    ActivoQRImagenView,
     FacturaDetailAPIView,
     FacturaListCreateAPIView,
     FacturaPropuestasAPIView,
@@ -14,6 +17,9 @@ from .views import (
 )
 
 urlpatterns = [
+    path("qr/consulta/<uuid:token>/", ConsultaQRPublicaView.as_view(), name="qr-consulta-publica"),
+    path("activos/<int:activo_id>/qr/", ActivoQRView.as_view(), name="activo-qr"),
+    path("activos/<int:activo_id>/qr/imagen/", ActivoQRImagenView.as_view(), name="activo-qr-imagen"),
     path("propuestas/<int:pk>/registrar/", PropuestaRegistrarAPIView.as_view(), name="propuesta-registrar"),
     path("facturas/", FacturaListCreateAPIView.as_view(), name="factura-list-create"),
     path("facturas/<int:pk>/", FacturaDetailAPIView.as_view(), name="factura-detail"),

@@ -1,6 +1,6 @@
 
 from django.contrib import admin
-from .models import EstadoComponente, Articulo, Factura, TipoBien, EstadoActivo, Ubicacion, Activo, Responsable, Proveedor, Componente, ComponenteInstalado, Movimiento
+from .models import EtiquetaQR, EstadoComponente, Articulo, Factura, TipoBien, EstadoActivo, Ubicacion, Activo, Responsable, Proveedor, Componente, ComponenteInstalado, Movimiento
 
 
 @admin.register(Factura)
@@ -167,3 +167,11 @@ class EstadoComponenteAdmin(admin.ModelAdmin):
     search_fields = ("nombre", "descripcion")
     list_filter = ("activo",)
     ordering = ("nombre",)
+
+
+@admin.register(EtiquetaQR)
+class EtiquetaQRAdmin(admin.ModelAdmin):
+    list_display = ("activo", "token", "activa", "fecha_generacion", "fecha_actualizacion")
+    search_fields = ("activo__numero_inventario", "token")
+    list_filter = ("activa", "fecha_generacion")
+    readonly_fields = ("token", "fecha_generacion", "fecha_actualizacion")

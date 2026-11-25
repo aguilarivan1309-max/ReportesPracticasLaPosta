@@ -1,9 +1,11 @@
+from django.urls import reverse
+from .servicios_qr import construir_url_qr
 from django.db import IntegrityError, transaction
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from .models import Factura, Proveedor, PropuestaInventario
+from .models import Factura, Proveedor, PropuestaInventario, EtiquetaQR
 from .inventario.validadores import validar_pdf, validar_xml
 from .lectura_xml import extraer_datos_factura
 from .servicios import datos_faltantes
@@ -191,3 +193,24 @@ class PropuestaInventarioSerializer(serializers.ModelSerializer):
                 "estado_revision": "Solo se pueden editar propuestas pendientes."
             })
         return attrs
+
+class EtiquetaQRSerializer(serializers.ModelSerializer):
+    numero_inventario = serializers.CharField(source="activo.numero_inventario", read_only=True)
+    url_imagen = serializers.SerializerMethodField()
+    url_publica = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EtiquetaQR
+        fields = ["id", "activo", "numero_inventario", "token", "activa", "fecha_generacion",
+                  "fecha_actualizacion", "url_imagen", "url_publica"]
+        read_only_fields = fields
+
+    @extend_schema_field(serializers.URLField())
+    def get_url_imagen(self, obj):
+        url = reverse("activo-qr-imagen", kwargs={"activo_id": obj.activo_id})
+        request = self.context.get("request")
+        return request.build_absolute_uri(url) if request else url
+
+    @extend_schema_field(serializers.URLField())
+    def get_url_publica(self, obj):
+        return construir_url_qr(obj)
