@@ -7,11 +7,63 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Seguridad y variables de entorno
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() == "true"
+
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    for host in os.environ.get(
+        "DJANGO_ALLOWED_HOSTS",
+        "localhost,127.0.0.1"
+    ).split(",")
     if host.strip()
 ]
+
+# Ori­genes autorizados para solicitudes protegidas mediante CSRF
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        "DJANGO_CSRF_TRUSTED_ORIGINS",
+        ""
+    ).split(",")
+    if origin.strip()
+]
+
+# Configuracion de seguridad HTTPS
+SECURE_SSL_REDIRECT = (
+    os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "False").lower() == "true"
+)
+
+SESSION_COOKIE_SECURE = (
+    os.environ.get("DJANGO_SESSION_COOKIE_SECURE", "False").lower() == "true"
+)
+
+CSRF_COOKIE_SECURE = (
+    os.environ.get("DJANGO_CSRF_COOKIE_SECURE", "False").lower() == "true"
+)
+
+SECURE_HSTS_SECONDS = int(
+    os.environ.get("DJANGO_SECURE_HSTS_SECONDS", "0")
+)
+
+SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+    os.environ.get(
+        "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS",
+        "False"
+    ).lower() == "true"
+)
+
+SECURE_HSTS_PRELOAD = (
+    os.environ.get("DJANGO_SECURE_HSTS_PRELOAD", "False").lower() == "true"
+)
+
+# Cabeceras adicionales de seguridad
+X_FRAME_OPTIONS = "DENY"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+# Proxy HTTPS: habilitar unicamente detras de un proxy de confianza
+if os.environ.get("DJANGO_SECURE_PROXY_SSL_HEADER", "False").lower() == "true":
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 
 # Aplicaciones instaladas
 INSTALLED_APPS = [
@@ -67,11 +119,11 @@ DATABASES = {
         "PASSWORD": os.environ["POSTGRES_PASSWORD"],
         "HOST": os.environ.get("DB_HOST", "db"),
         "PORT": os.environ.get("DB_PORT", "5432"),
-        "CONN_MAX_AGE": 60,
+        "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
     }
 }
 
-# Validación de contraseñas
+# Validacion de contrasenas
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -87,7 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Configuración de Django REST Framework
+# Django REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -98,7 +150,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Configuración JWT
+# Configuracion JWT
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
@@ -106,10 +158,10 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
 }
 
-# Documentación de la API
+# Documentacion de la API
 SPECTACULAR_SETTINGS = {
     "TITLE": "API de Inventario y Facturas",
-    "DESCRIPTION": "API para la gestión y consulta de facturas del sistema de inventario.",
+    "DESCRIPTION": "API para la gestion y consulta de facturas del sistema de inventario.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SWAGGER_UI_DIST": "SIDECAR",
@@ -125,7 +177,7 @@ TIME_ZONE = "America/Mexico_City"
 USE_I18N = True
 USE_TZ = True
 
-# Archivos estáticos
+# Archivos estaticos
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
