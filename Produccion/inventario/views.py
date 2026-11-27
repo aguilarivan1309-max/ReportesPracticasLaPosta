@@ -4,8 +4,8 @@ from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema
-from rest_framework import generics, status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import generics, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -232,12 +232,31 @@ class PropuestaRegistrarAPIView(generics.GenericAPIView):
 
     serializer_class = PropuestaInventarioSerializer
 
-    @extend_schema(request=None, responses=PropuestaInventarioSerializer)
+    @extend_schema(
+        request=None,
+        responses={
+            201: inline_serializer(
+                name="RegistroPropuesta",
+                fields={
+                    "propuesta": PropuestaInventarioSerializer(),
+                    "activos": serializers.ListField(
+                        child=serializers.CharField()
+                    ),
+                    "componentes": serializers.ListField(
+                        child=serializers.IntegerField()
+                    ),
+                },
+            ),
+        },
+    )
     def post(self, request, pk):
         with transaction.atomic():
             propuesta = get_object_or_404(
                 PropuestaInventario.objects.select_for_update(), pk=pk
             )
+
+            self.check_object_permissions(request, propuesta)
+
             activos, componentes = registrar_propuesta(
                 propuesta, usuario=request.user
             )
@@ -245,8 +264,8 @@ class PropuestaRegistrarAPIView(generics.GenericAPIView):
         return Response(
             {
                 "propuesta": self.get_serializer(propuesta).data,
-                "activos": [a.numero_inventario for a in activos],
-                "componentes": [c.id for c in componentes],
+                "activos": [activo.numero_inventario for activo in activos],
+                "componentes": [componente.pk for componente in componentes],
             },
             status=status.HTTP_201_CREATED,
         )
@@ -268,6 +287,7 @@ class UsuarioActualAPIView(APIView):
             "es_superusuario": usuario.is_superuser,
         }
         return Response(UsuarioActualSerializer(datos).data)
+
 
 class ActivoBajaAPIView(generics.GenericAPIView):
     """Registra la baja lógica de un activo conservando su historial."""
@@ -312,6 +332,7 @@ class ActivoBajaAPIView(generics.GenericAPIView):
             ),
             "movimiento_id": movimiento.id,
         }
+
         return Response(
             ActivoBajaRespuestaSerializer(respuesta).data,
             status=status.HTTP_200_OK,

@@ -1,3 +1,4 @@
+
 from decimal import Decimal
 
 from django.db import IntegrityError, transaction
@@ -16,7 +17,8 @@ from .models import (
 PREFIJO_INVENTARIO = "INV"
 MAX_UNIDADES = 1000
 ESTADO_COMPONENTE_INICIAL = "Disponible"
-ESTADO_ACTIVO_BAJA = 'Baja'
+ESTADO_ACTIVO_BAJA = "Baja"
+
 
 def _siguiente_consecutivo(prefijo):
     """Devuelve el siguiente consecutivo para un prefijo INV-AAAA-."""
@@ -32,6 +34,56 @@ def _siguiente_consecutivo(prefijo):
         return int(ultimo.numero_inventario.rsplit("-", 1)[-1]) + 1
     except ValueError:
         return Activo.objects.filter(numero_inventario__startswith=prefijo).count() + 1
+
+
+def datos_faltantes(propuesta):
+    """
+    Devuelve {campo: mensaje} con lo que aún falta para poder aceptar la
+    propuesta. Un diccionario vacío significa que está completa.
+
+    - por clasificar: falta clasificarla.
+    - no inventariable: no necesita más datos.
+    - activo: artículo, estado inicial, marca y modelo.
+    - componente: marca y modelo.
+
+    La marca y el modelo se consideran completos si están en la propuesta
+    o, cuando hay artículo, en el artículo.
+    """
+    Tipo = PropuestaInventario.TipoRegistro
+    tipo = propuesta.tipo_registro
+
+    if tipo == Tipo.NO_INVENTARIABLE:
+        return {}
+
+    if tipo == Tipo.POR_CLASIFICAR:
+        return {
+            "tipo_registro": (
+                "Clasifica la propuesta: activo, componente o no inventariable."
+            )
+        }
+
+    faltantes = {}
+    articulo = propuesta.articulo if propuesta.articulo_id else None
+
+    if tipo == Tipo.ACTIVO:
+        if articulo is None:
+            faltantes["articulo"] = "Un activo requiere un artículo."
+        if propuesta.estado_activo_id is None:
+            faltantes["estado_activo"] = "Un activo requiere un estado inicial."
+
+    marca = (propuesta.marca or "").strip() or (
+        (articulo.marca or "").strip() if articulo else ""
+    )
+    modelo = (propuesta.modelo or "").strip() or (
+        (articulo.modelo or "").strip() if articulo else ""
+    )
+
+    if not marca:
+        faltantes["marca"] = "Indica la marca."
+    if not modelo:
+        faltantes["modelo"] = "Indica el modelo."
+
+    return faltantes
 
 
 def _unidades(propuesta):
@@ -80,8 +132,10 @@ def registrar_propuesta(propuesta, usuario=None):
                     raise ValidationError({
                         "tipo_registro": "El activo requiere artículo y estado inicial."
                     })
+
                 prefijo = f"{PREFIJO_INVENTARIO}-{timezone.now().year}-"
                 consecutivo = _siguiente_consecutivo(prefijo)
+
                 for i in range(unidades):
                     activo = Activo.objects.create(
                         numero_inventario=f"{prefijo}{consecutivo + i:04d}",
@@ -91,6 +145,7 @@ def registrar_propuesta(propuesta, usuario=None):
                         estado=propuesta.estado_activo,
                         fecha_adquisicion=factura.fecha_emision,
                     )
+
                     Movimiento.objects.create(
                         activo=activo,
                         tipo=Movimiento.TipoMovimiento.ALTA,
@@ -101,10 +156,12 @@ def registrar_propuesta(propuesta, usuario=None):
                         ),
                     )
                     activos.append(activo)
+
             else:
                 estado, _ = EstadoComponente.objects.get_or_create(
                     nombre=ESTADO_COMPONENTE_INICIAL
                 )
+
                 for _i in range(unidades):
                     componentes.append(
                         Componente.objects.create(
@@ -119,65 +176,75 @@ def registrar_propuesta(propuesta, usuario=None):
 
             propuesta.estado_revision = PropuestaInventario.EstadoRevision.REGISTRADA
             propuesta.save(update_fields=["estado_revision"])
+
     except IntegrityError:
         raise ValidationError({
             "detail": "No se pudo generar el número de inventario. Intenta de nuevo."
         })
 
     return activos, componentes
+
+
 def dar_baja_activo(activo, motivo, usuario=None):
     """
-    Ejecuta la logica de un activo consevando a sus responsable, ubicacion e
-    historial de movimientos.
+    Ejecuta la lógica de baja de un activo conservando su responsable,
+    ubicación e historial de movimientos.
 
-    Bloquea la operacion en caso de que el activo ya se encuentre en estado 'Baja' o si
-    tiene componentes instalados pendientes de reitro. Debe llamarse dentro de
+    Bloquea la operación si el activo ya está dado de baja o si tiene
+    componentes instalados pendientes de retiro. Debe llamarse dentro de
     transaction.atomic() con el activo bloqueado mediante select_for_update().
     """
     motivo_limpio = (motivo or "").strip()
+
     if not motivo_limpio:
         raise ValidationError({
             "motivo": "El motivo de baja es obligatorio."
         })
+
     if activo.estado.nombre.strip().lower() == ESTADO_ACTIVO_BAJA.lower():
         raise ValidationError({
             "estado": "El activo ya se encuentra dado de baja."
         })
+
     instalados = list(
         activo.componentes_instalados.select_related("componente").filter(
             fecha_retiro__isnull=True
         )
     )
+
     if instalados:
         detalle_componentes = ", ".join(
             f"{ci.componente.nombre}"
-            +(
+            + (
                 f"(S/N: {ci.componente.numero_serie})"
                 if ci.componente.numero_serie
-                else "" 
+                else ""
             )
             for ci in instalados
         )
         raise ValidationError({
-            "componentes_instalados":(
-                f"No se puede dar de baja el activo por que tiene "
+            "componentes_instalados": (
+                f"No se puede dar de baja el activo porque tiene "
                 f"{len(instalados)} componente(s) instalado(s) sin retirar: "
                 f"{detalle_componentes}."
             )
         })
+
     estado_baja, _ = EstadoActivo.objects.get_or_create(
         nombre=ESTADO_ACTIVO_BAJA,
         defaults={
-            "descripcion": "Activo dado de baja del invetario operativo. ",
+            "descripcion": "Activo dado de baja del inventario operativo.",
         },
     )
-    #Se conservan activo.responsable y activo.ubicacion intactos 
+
+    # Se conservan activo.responsable y activo.ubicacion intactos.
     activo.estado = estado_baja
     activo.save(update_fields=["estado"])
 
     usuario_registro = (
         usuario if (usuario is not None and usuario.is_authenticated) else None
     )
+
     movimiento = Movimiento.objects.create(
         activo=activo,
         tipo=Movimiento.TipoMovimiento.BAJA,
@@ -186,4 +253,5 @@ def dar_baja_activo(activo, motivo, usuario=None):
         observaciones=motivo_limpio,
         usuario=usuario_registro,
     )
-    return activo, movimiento 
+
+    return activo, movimiento
