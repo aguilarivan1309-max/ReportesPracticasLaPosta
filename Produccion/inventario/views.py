@@ -26,7 +26,10 @@ from .serializers import (
     PropuestaInventarioSerializer,
 )
 
-from .servicios import registrar_propuesta
+from .servicios import (
+    registrar_propuesta,
+    generar_propuestas_desde_factura,
+)
 
 CENTAVOS = Decimal("0.01")
 
@@ -110,45 +113,16 @@ class FacturaPropuestasAPIView(generics.ListAPIView):
     def post(self, request, factura_id):
         factura = get_object_or_404(Factura, pk=factura_id)
 
-        if not factura.archivo_xml:
-            raise ValidationError({
-                "archivo_xml": "La factura no tiene un XML adjunto."
-            })
+        propuestas, creadas = generar_propuestas_desde_factura(factura)
 
-        try:
-            with factura.archivo_xml.open("rb") as archivo:
-                conceptos = extraer_conceptos_factura(archivo)
-        except FileNotFoundError:
-            raise ValidationError({
-                "archivo_xml": "No se encontró el archivo XML de la factura."
-            })
+        datos = self.get_serializer(propuestas, many=True).data
 
-        creadas = 0
-        with transaction.atomic():
-            for c in conceptos:
-                _, creada = PropuestaInventario.objects.get_or_create(
-                    factura=factura,
-                    indice_concepto=c["numero_concepto"],
-                    defaults={
-                        "clave_prodserv": c["clave_prod_serv"],
-                        "no_identificacion": c["no_identificacion"],
-                        "descripcion": c["descripcion"],
-                        "cantidad": c["cantidad"],
-                        "clave_unidad": c["clave_unidad"],
-                        "unidad": c["unidad"],
-                        "valor_unitario": c["valor_unitario"].quantize(
-                            CENTAVOS, rounding=ROUND_HALF_UP
-                        ),
-                        "importe": c["importe"].quantize(
-                            CENTAVOS, rounding=ROUND_HALF_UP
-                        ),
-                        "objeto_impuesto": c["objeto_impuesto"],
-                    },
-                )
-                creadas += int(creada)
+        codigo = (
+            status.HTTP_201_CREATED
+            if creadas
+            else status.HTTP_200_OK
+        )
 
-        datos = self.get_serializer(self.get_queryset(), many=True).data
-        codigo = status.HTTP_201_CREATED if creadas else status.HTTP_200_OK
         return Response(datos, status=codigo)
 
 

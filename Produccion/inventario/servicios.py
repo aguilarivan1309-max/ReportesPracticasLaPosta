@@ -1,9 +1,8 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-
 from .models import (
     Activo,
     EtiquetaQR,
@@ -12,11 +11,72 @@ from .models import (
     Movimiento,
     PropuestaInventario,
 )
+from .conceptos_xml import extraer_conceptos_factura
+from .models import Factura
+
+CENTAVOS = Decimal("0.01")
 
 PREFIJO_INVENTARIO = "INV"
 MAX_UNIDADES = 1000
 ESTADO_COMPONENTE_INICIAL = "Disponible"
 
+def generar_propuestas_desde_factura(factura):
+    """
+    Genera propuestas de inventario a partir de los conceptos del XML.
+
+    - Verifica que exista un XML adjunto.
+    - Extrae los conceptos de la factura.
+    - Crea una propuesta por concepto.
+    - Evita duplicados mediante get_or_create.
+    - Devuelve las propuestas y la cantidad de propuestas creadas.
+
+    Debe utilizarse tanto desde el Admin como desde la API.
+    """
+    if not factura.archivo_xml:
+        raise ValidationError({
+            "archivo_xml": "La factura no tiene un XML adjunto."
+        })
+
+    try:
+        with factura.archivo_xml.open("rb") as archivo:
+            conceptos = extraer_conceptos_factura(archivo)
+
+    except FileNotFoundError:
+        raise ValidationError({
+            "archivo_xml": "No se encontró el archivo XML de la factura."
+        })
+
+    propuestas = []
+    creadas = 0
+
+    with transaction.atomic():
+        for concepto in conceptos:
+            propuesta, creada = PropuestaInventario.objects.get_or_create(
+                factura=factura,
+                indice_concepto=concepto["numero_concepto"],
+                defaults={
+                    "clave_prodserv": concepto["clave_prod_serv"],
+                    "no_identificacion": concepto["no_identificacion"],
+                    "descripcion": concepto["descripcion"],
+                    "cantidad": concepto["cantidad"],
+                    "clave_unidad": concepto["clave_unidad"],
+                    "unidad": concepto["unidad"],
+                    "valor_unitario": concepto["valor_unitario"].quantize(
+                        CENTAVOS,
+                        rounding=ROUND_HALF_UP,
+                    ),
+                    "importe": concepto["importe"].quantize(
+                        CENTAVOS,
+                        rounding=ROUND_HALF_UP,
+                    ),
+                    "objeto_impuesto": concepto["objeto_impuesto"],
+                },
+            )
+
+            propuestas.append(propuesta)
+            creadas += int(creada)
+
+    return propuestas, creadas
 
 def _siguiente_consecutivo(prefijo):
     """Devuelve el siguiente consecutivo para un prefijo INV-AAAA-."""

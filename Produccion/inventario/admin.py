@@ -1,10 +1,11 @@
 
 from django.contrib import admin
-from .models import EtiquetaQR, EstadoComponente, Articulo, Factura, TipoBien, EstadoActivo, Ubicacion, Activo, Responsable, Proveedor, Componente, ComponenteInstalado, Movimiento
+from .models import EtiquetaQR, EstadoComponente, Articulo, Factura, TipoBien, EstadoActivo, Ubicacion, Activo, Responsable, Proveedor, Componente, ComponenteInstalado, Movimiento, PropuestaInventario
 
 
 @admin.register(Factura)
 class FacturaAdmin(admin.ModelAdmin):
+
     list_display = (
         "folio",
         "fecha_emision",
@@ -12,14 +13,56 @@ class FacturaAdmin(admin.ModelAdmin):
         "proveedor_rfc",
         "importe_total",
     )
+
     search_fields = (
         "folio",
         "proveedor_nombre",
         "proveedor_rfc",
     )
+
     list_filter = ("fecha_emision",)
     ordering = ("-fecha_emision",)
 
+    def save_model(self, request, obj, form, change):
+        """
+        Guarda la factura y genera propuestas automáticamente
+        cuando se adjunta un XML nuevo o se reemplaza el existente.
+        """
+        xml_nuevo = (
+            not change
+            or "archivo_xml" in form.changed_data
+        )
+
+        super().save_model(request, obj, form, change)
+
+        if xml_nuevo and obj.archivo_xml:
+            from .servicios import generar_propuestas_desde_factura
+
+            try:
+                propuestas, creadas = generar_propuestas_desde_factura(obj)
+
+                if creadas:
+                    self.message_user(
+                        request,
+                        f"Se generaron {creadas} propuestas de inventario "
+                        f"de {obj.folio}.",
+                        level="SUCCESS",
+                    )
+                else:
+                    self.message_user(
+                        request,
+                        f"La factura {obj.folio} ya tenía sus propuestas "
+                        "registradas. No se generaron duplicados.",
+                        level="INFO",
+                    )
+
+            except Exception as error:
+                self.message_user(
+                    request,
+                    f"La factura se guardó, pero no fue posible generar "
+                    f"las propuestas: {error}",
+                    level="ERROR",
+                )
 
 @admin.register(TipoBien)
 class TipoBienAdmin(admin.ModelAdmin):
@@ -175,3 +218,33 @@ class EtiquetaQRAdmin(admin.ModelAdmin):
     search_fields = ("activo__numero_inventario", "token")
     list_filter = ("activa", "fecha_generacion")
     readonly_fields = ("token", "fecha_generacion", "fecha_actualizacion")
+
+@admin.register(PropuestaInventario)
+class PropuestainventarioAdmin(admin.ModelAdmin):
+    list_display = (
+        "id", 
+        "factura",
+        "indice_concepto",
+        "descripcion",
+        "cantidad",
+        "tipo_registro",
+        "estado_revision",
+        "fecha_registro",
+    )
+    list_filter = (
+        "tipo_registro",
+        "factura__folio",
+        "clave_prodserv",
+        "no_identificacion",
+    )
+    list_select_related = (
+        "factura",
+        "articulo",
+        "estado_activo",
+    )
+    ordering = ("-fecha_registro", "-id")
+
+    readonly_fields = (
+        "fecha_registro",
+        "fecha_revision",
+    )
